@@ -21,24 +21,24 @@ mutable struct GCMC_System
 	mobility::Float64 # Particle mobility (standard deviation of random displacement)
 
 
-	function GCMC_System(;L::Real=10, σ::Real=1.0, μ::Real=0.0, β::Real=1.0, Vext::Function=(x, y) -> 0.0)
-		new(L, 0, σ, μ, β, Vext, Float64[], is_colliding_small)
+	function GCMC_System(;L::Real=10, σ::Real=1.0, μ::Real=0.0, β::Real=1.0, Vext::Function=(x) -> 0.0, mobility=0.25σ)
+		new(L, 0, σ, μ, β, Vext, Float64[], is_colliding_small, mobility)
 	end
 end
 
 
 # Energy of a certain particle i
 function energy(sys::GCMC_System, i::Int)
-	Vext(sys.positions[i])
+	sys.Vext(sys.positions[i])
 end
 # Energy of a 
 function energy(sys::GCMC_System, is::AbstractRange{Int})
-	sum(Vext.(sys.positions[is]))
+	sum(sys.Vext.(sys.positions[is]))
 end
 
 
 # check if a particle can be inserted
-function is_colliding_small(sys::GCMC_System, pos::Tuple{Float64, Float64})
+function is_colliding_small(sys::GCMC_System, pos::Tuple{<:Real, <:Real})
 	if isempty(sys.positions)
 		return false
 	end
@@ -76,11 +76,11 @@ function is_colliding_small(sys::GCMC_System, pos::Tuple{Float64, Float64})
 end
 
 import Base.insert!
-function insert!(sys::GCMC_System, pos::Tuple{Float64, Float64}, check_col::Bool=true)
+function insert!(sys::GCMC_System, pos::Tuple{<:Real, <:Real}, check_col::Bool=true)
 	if check_col && sys.is_colliding(sys, pos)
 		return false
 	end
-	push!(sys.positions, pos)
+	push!(sys.positions, Float64.(pos))
 	sys.N += 1
 	return true
 end
@@ -101,7 +101,7 @@ function try_insert!(sys::GCMC_System)
 
 	dE = energy(sys, sys.N) - sys.μ # Energy difference
 	# FIXME this might be wrong:
-	α_insert = min(1, 1 - 2 * sys.L^2 / (sys.L * sys.σ^2 + 1) * exp(-sys.β * dE)) # Acceptance probability
+	α_insert = min(1, 1 - (sys.N * sys.σ^2 + 1) / sys.L^2 * exp(-sys.β * dE)) # Acceptance probability
 	
 	if rand() < α_insert # Accept the insertion
 		return true
@@ -114,6 +114,10 @@ end
 
 
 function try_delete!(sys::GCMC_System)
+	if sys.N == 0
+		return false
+	end
+
 	i = rand(1:sys.N) # Random particle
 	dE = -energy(sys, i) + sys.μ # Energy difference
 	# FIXME this might be wrong:
@@ -128,14 +132,32 @@ end
 
 
 function try_move!(sys::GCMC_System)
-	i = rand(1:sys.N) # Random particle
-
-	x, y = mod.(sys.positions[i] + randn(2) * sys.mobility, sys.L) # Random move
-
-	if sys.is_colliding(sys, (x, y)) # Check if the position is already occupied
+	if sys.N == 0
 		return false
 	end
 
-	#...
-	
+	i = rand(1:sys.N) # Random particle
+
+	pos = sys.positions[i]
+	new_pos = mod.(pos .+ randn(2) * sys.mobility, sys.L) |> Tuple # Random move
+
+	E1 = energy(sys, i) # Energy before the move
+
+	delete!(sys, i)
+
+	if insert!(sys, new_pos)
+		E2 = energy(sys, sys.N) # Energy after the move
+		dE = E2-E1 # Energy difference
+
+		# FIXME this might be wrong:
+		α_move = min(1, exp(-sys.β * dE)) # Acceptance probability
+
+		if rand() < α_move # Accept the move
+			return true
+		end
+		delete!(sys, sys.N)
+	end
+
+	insert!(sys, pos, false) # Reinsert the particle
+	return false # Move rejected
 end
