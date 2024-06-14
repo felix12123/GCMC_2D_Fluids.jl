@@ -3,6 +3,10 @@ using LinearAlgebra
 
 # Energy of a certain particle i
 function energy(sys::GCMC_System, i::Int)
+	if i > sys.N
+		@warn "Particle $i does not exist in the system."
+		return 0
+	end
 	sys.Vext(sys.positions[i])
 end
 # Energy of a 
@@ -75,8 +79,8 @@ function try_insert!(sys::GCMC_System)
 
 	dE = energy(sys, sys.N) - sys.μ # Energy difference
 	# FIXME this might be wrong:
-	α_insert = min(1, 1 - (sys.N * sys.σ^2 + 1) / sys.L^2 * exp(-sys.β * dE)) # Acceptance probability
-	
+	α_insert = clamp(1 - (sys.N * sys.σ^2 + 1) / sys.L^2 * exp(sys.β * dE), 0, 1) # Acceptance probability
+
 	if rand() < α_insert # Accept the insertion
 		return true
 	end
