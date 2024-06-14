@@ -10,7 +10,7 @@ function energy(sys::GCMC_System, i::Int)
 	sys.Vext(sys.positions[i])
 end
 # Energy of a 
-function energy(sys::GCMC_System, is::AbstractRange{Int})
+function energy(sys::GCMC_System, is::AbstractRange{Int}=1:sys.N)
 	sum(sys.Vext.(sys.positions[is]))
 end
 
@@ -21,30 +21,35 @@ function is_colliding_small(sys::GCMC_System, pos::Tuple{<:Real, <:Real})
 		return false
 	end
 
-	if any([norm(pos .- pos_i) < sys.σ for pos_i in sys.positions])
-		return true
+	# if any([norm(pos .- pos_i) < sys.σ for pos_i in sys.positions])
+	# 	return true
+	# end
+	for pos_i in sys.positions
+		if norm(pos .- pos_i) < sys.σ
+			return true
+		end
 	end
 
 	# if particle is partly outside the box, check periodic boundary conditions
-	if pos[1] < sys.σ/2
+	if pos[1] < sys.σ
 		new_pos = pos .+ [sys.L, 0]
 		if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
 			return true
 		end
 	end
-	if pos[1] > sys.L - sys.σ/2
+	if pos[1] > sys.L - sys.σ
 		new_pos = pos .- [sys.L, 0]
 		if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
 			return true
 		end
 	end
-	if pos[2] < sys.σ/2
+	if pos[2] < sys.σ
 		new_pos = pos .+ [0, sys.L]
 		if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
 			return true
 		end
 	end
-	if pos[2] > sys.L - sys.σ/2
+	if pos[2] > sys.L - sys.σ
 		new_pos = pos .- [0, sys.L]
 		if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
 			return true
@@ -65,6 +70,9 @@ end
 
 import Base.delete!
 function delete!(sys::GCMC_System, i::Int)
+	if i > sys.N
+		return false
+	end
 	deleteat!(sys.positions, i)
 	sys.N -= 1
 end
