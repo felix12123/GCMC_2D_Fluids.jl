@@ -1,3 +1,5 @@
+# predefine function is_colliding_small
+is_colliding_small() = error("predefined function used")
 
 mutable struct GCMC_Simulation
 	L::Float64 # Box length
@@ -6,6 +8,10 @@ mutable struct GCMC_Simulation
 	β::Float64 # Inverse temperature
 	Vext::Function # External potential
 	mobility::Float64 # Particle mobility (standard deviation of random displacement)
+
+	steps::Int64 # Number of steps
+	therm_steps::Int64 # Number of thermalization steps
+	
 
 	# we first roll the move probability. if it fails, we roll the insert probability.
 	# if both fail, we try to delete.
@@ -29,8 +35,10 @@ mutable struct GCMC_System
 	move_prob::Float64 # Probability of moving a particle
 	insert_prob::Float64 # Probability of inserting a particle
 
-	function GCMC_System(;L::Real=10, σ::Real=1.0, μ::Real=0.0, β::Real=1.0, Vext::Function=(x) -> 0.0, mobility=0.25σ, move_prob::Float64=0.8, insert_prob::Float64=0.5)
-		new(L, 0, σ, μ, β, Vext, Float64[], is_colliding_small, mobility, move_prob, insert_prob)
+	dx::Float64 # Discretization step for histogram
+
+	function GCMC_System(;L::Real=10, σ::Real=1.0, μ::Real=0.0, β::Real=1.0, Vext::Function=(x) -> 0.0, mobility=0.25σ, move_prob::Float64=0.8, insert_prob::Float64=0.5, dx::Float64=0.05)
+		new(L, 0, σ, μ, β, Vext, Float64[], is_colliding_small, mobility, move_prob, insert_prob, dx)
 	end
 end
 
@@ -39,7 +47,7 @@ mutable struct Histogram
 	dx::Float64
 	ρ::Matrix{Float64}
 	count::Int
-	function Histograms(sys::GCMC_Simulation; dx=0.05)
-		new(floor(sys.L/dx)^2, dx, zeros(floor(sys.L/dx), floor(sys.L/dx)), 0)
+	function Histogram(sys::GCMC_System; dx=0.05)
+		new(dx, zeros(floor(Int, sys.L/dx), floor(Int, sys.L/dx)), 0)
 	end
 end
