@@ -30,31 +30,42 @@ function is_colliding_small(sys::GCMC_System, pos::Tuple{<:Real, <:Real})
 		end
 	end
 
-	# if particle is partly outside the box, check periodic boundary conditions
-	if pos[1] < sys.σ
-		new_pos = pos .+ [sys.L, 0]
-		if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
-			return true
-		end
+	distances = [norm(mod.(pos .- pos_i .+ sys.σ, sys.L) .- sys.σ) for pos_i in sys.positions]
+	if any(distances .< sys.σ)
+		return true
 	end
-	if pos[1] > sys.L - sys.σ
-		new_pos = pos .- [sys.L, 0]
-		if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
-			return true
-		end
-	end
-	if pos[2] < sys.σ
-		new_pos = pos .+ [0, sys.L]
-		if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
-			return true
-		end
-	end
-	if pos[2] > sys.L - sys.σ
-		new_pos = pos .- [0, sys.L]
-		if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
-			return true
-		end
-	end
+	# # if particle is partly outside the box, check periodic boundary conditions
+	# if pos[1] < sys.σ
+	# 	# check if the particle is close to the corner
+	# 	if pos[2] < sys.σ
+	# 		new_pos = pos .+ [sys.L, sys.L]
+	# 		if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
+	# 			return true
+	# 		end
+	# 	end
+	# 	new_pos = pos .+ [sys.L, 0]
+	# 	if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
+	# 		return true
+	# 	end
+	# end
+	# if pos[1] > sys.L - sys.σ
+	# 	new_pos = pos .- [sys.L, 0]
+	# 	if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
+	# 		return true
+	# 	end
+	# end
+	# if pos[2] < sys.σ
+	# 	new_pos = pos .+ [0, sys.L]
+	# 	if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
+	# 		return true
+	# 	end
+	# end
+	# if pos[2] > sys.L - sys.σ
+	# 	new_pos = pos .- [0, sys.L]
+	# 	if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
+	# 		return true
+	# 	end
+	# end
 	return false
 end
 
