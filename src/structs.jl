@@ -47,7 +47,17 @@ mutable struct Histogram
 	dx::Float64
 	ρ::Matrix{Float64}
 	count::Int
-	function Histogram(sys::GCMC_System; dx=0.05)
-		new(dx, zeros(floor(Int, sys.L/dx), floor(Int, sys.L/dx)), 0)
+	function Histogram(sys::GCMC_System)
+		new(dx, zeros(floor(Int, sys.L/dx), floor(Int, sys.L/sys.dx)), 0)
+	end
+end
+
+
+mutable struct g_Histogram
+	dx::Float64
+	ρ::Vector{Int}
+	count::Int
+	function g_Histogram(sys::GCMC_System)
+		new(dx, zeros(Int, floor(Int, sys.L/2/sys.dx)), 0)
 	end
 end
