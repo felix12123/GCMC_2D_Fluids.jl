@@ -26,7 +26,7 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 	if verbose; P = Progress(N, desc="Creating Training Data"); end
 
 	tasks = 1:N*50
-	task_bundels = [tasks[i:opt.threads:end] for i in 1:opt.threads]
+	task_bundels = [tasks[i:opt.threads[1]:end] for i in 1:opt.threads[1]]
 	
 	update!(P, 0)
 	Threads.@threads for ns in task_bundels
@@ -44,7 +44,7 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 
 			sys = GCMC_System(L=opt.L, σ=opt.σ, μ=μ, β=opt.β, Vext=Vext, mobility=opt.mobility, move_prob=opt.move_prob, insert_prob=opt.insert_prob, dx=opt.dx)
 
-			rho, _, _ = simulate(sys, opt.steps, opt.therm_steps, opt.sample_interval, track_g=false, repetitions=opt.repetitions)
+			rho, _, _ = simulate(sys, opt.steps, opt.therm_steps, opt.sample_interval, track_g=false, repetitions=opt.repetitions, threads=opt.threads[2])
 			rho = opt.rho_smooth_func(rho, sys)
 
 			if opt.accept_condition(rho)

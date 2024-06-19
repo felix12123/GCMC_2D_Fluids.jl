@@ -14,7 +14,7 @@ mutable struct GCMC_TrainingData
 	therm_steps::Int64 # Number of thermalization steps
 	sample_interval::Int64 # Interval to sample observables
 
-	threads::Int64 # Number of threads
+	threads::Tuple{Int64, Int64} # Number of threads for outer and inner loop (repetitions)
 	repetitions::Int64 # Number of repetitions per potential
 	num_systems::Int # Number of systems to generate
 
@@ -39,7 +39,7 @@ mutable struct GCMC_TrainingData
 			steps::Real=10^6,
 			therm_steps::Real=3*10^4,
 			sample_interval::Real=1000,
-			threads::Real=Threads.nthreads(),
+			threads::Union{<:Real, Tuple{<:Real, <:Real}}=Threads.nthreads(),
 			repetitions::Real=1,
 			num_systems::Real=20,
 			move_prob::Real=0.9,
@@ -48,8 +48,11 @@ mutable struct GCMC_TrainingData
 			Vext_generator::Function=(x...)->0.0,
 			rho_smooth_func::Function=(x, y...)->x
 		)
-
-		new(L, σ, μ_range, β, mobility, dx, ceil(Int, steps), ceil(Int, therm_steps), ceil(Int, sample_interval), ceil(Int, threads), ceil(Int, repetitions), ceil(Int, num_systems), move_prob, insert_prob, folder, accept_condition, Vext_generator, rho_smooth_func)
+		if isa(threads, Real)
+			half_threads = floor(Int, threads/2)
+			threads = (half_threads, threads - half_threads)
+		end
+		new(L, σ, μ_range, β, mobility, dx, ceil(Int, steps), ceil(Int, therm_steps), ceil(Int, sample_interval), threads, ceil(Int, repetitions), ceil(Int, num_systems), move_prob, insert_prob, folder, accept_condition, Vext_generator, rho_smooth_func)
 	end
 end
 
