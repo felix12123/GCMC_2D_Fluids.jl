@@ -51,10 +51,6 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 				atomic_add!(acceptances, 1)
 			else
 				atomic_add!(rejections, 1)
-				srho = sort(rho |> vec)
-				n = length(srho)÷100
-				maxmin = mean(srho[end-n:end]) / mean(srho[1:n])
-	
 				update!(P, showvalues=[(:acc, acceptances[]), (:rej, rejections[])])
 				continue
 			end
