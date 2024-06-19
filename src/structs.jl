@@ -1,22 +1,56 @@
 # predefine function is_colliding_small
 is_colliding_small() = error("predefined function used")
 
-mutable struct GCMC_Simulation
+mutable struct GCMC_TrainingData
 	L::Float64 # Box length
 	σ::Float64 # Particle diameter
 	μ_range::Tuple{Float64, Float64} # Chemical potential range
 	β::Float64 # Inverse temperature
-	Vext::Function # External potential
 	mobility::Float64 # Particle mobility (standard deviation of random displacement)
+
+	dx::Float64 # Discretization step for histograms
 
 	steps::Int64 # Number of steps
 	therm_steps::Int64 # Number of thermalization steps
-	
+	sample_interval::Int64 # Interval to sample observables
+
+	threads::Int64 # Number of threads
+	repetitions::Int64 # Number of repetitions per potential
+	num_systems::Int # Number of systems to generate
 
 	# we first roll the move probability. if it fails, we roll the insert probability.
 	# if both fail, we try to delete.
 	move_prob::Float64 # Probability of moving a particle
 	insert_prob::Float64 # Probability of inserting a particle
+
+	folder::String # Folder to save data
+
+	accept_condition::Function # Function to check if a density distribution is accepted
+	Vext_generator::Function # Function to generate a new external potential
+	rho_smooth_func::Function # Function to smooth the density distribution
+
+	function GCMC_TrainingData(folder::String;
+			L::Real=10.0,
+			σ::Real=1,
+			μ_range::Tuple{Real, Real}=(-1,10),
+			β::Real=1,
+			mobility::Real=0.15σ,
+			dx::Real=0.05,
+			steps::Real=10^6,
+			therm_steps::Real=3*10^4,
+			sample_interval::Real=1000,
+			threads::Real=Threads.nthreads(),
+			repetitions::Real=1,
+			num_systems::Real=20,
+			move_prob::Real=0.9,
+			insert_prob::Real=0.5,
+			accept_condition::Function=(x...)->true,
+			Vext_generator::Function=(x...)->0.0,
+			rho_smooth_func::Function=(x, y...)->x
+		)
+
+		new(L, σ, μ_range, β, mobility, dx, ceil(Int, steps), ceil(Int, therm_steps), ceil(Int, sample_interval), ceil(Int, threads), ceil(Int, repetitions), ceil(Int, num_systems), move_prob, insert_prob, folder, accept_condition, Vext_generator, rho_smooth_func)
+	end
 end
 
 mutable struct GCMC_System
@@ -48,7 +82,9 @@ mutable struct Histogram
 	ρ::Matrix{Float64}
 	count::Int
 	function Histogram(sys::GCMC_System)
-		new(dx, zeros(floor(Int, sys.L/dx), floor(Int, sys.L/sys.dx)), 0)
+		hist_len = floor(Int, sys.L/sys.dx)
+		rho = zeros(hist_len, hist_len)
+		new(dx, rho, 0)
 	end
 end
 
