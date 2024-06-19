@@ -44,13 +44,18 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 
 			sys = GCMC_System(L=opt.L, σ=opt.σ, μ=μ, β=opt.β, Vext=Vext, mobility=opt.mobility, move_prob=opt.move_prob, insert_prob=opt.insert_prob, dx=opt.dx)
 
-			rho, _, _ = simulate(sys, opt.steps, opt.therm_steps, opt.sample_interval, track_g=false)
-			rho = opt.rho_smooth_func(rho, sys.σ)
+			rho, _, _ = simulate(sys, opt.steps, opt.therm_steps, opt.sample_interval, track_g=false, repetitions=opt.repetitions)
+			rho = opt.rho_smooth_func(rho, sys)
 
 			if opt.accept_condition(rho)
 				atomic_add!(acceptances, 1)
 			else
 				atomic_add!(rejections, 1)
+				srho = sort(rho |> vec)
+				n = length(srho)÷100
+				maxmin = mean(srho[end-n:end]) / mean(srho[1:n])
+	
+				update!(P, showvalues=[(:acc, acceptances[]), (:rej, rejections[])])
 				continue
 			end
 
@@ -59,7 +64,7 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 			data = [vec(c1) vec(rho)]
 			file_number_tmp = Threads.atomic_add!(file_number, 1)
 			writedlm("$data_folder/data$(file_number_tmp).dat", data, ';')
-			verbose ? next!(P) : nothing
+			verbose ? next!(P, showvalues=[(:acc, acceptances[]), (:rej, rejections[])]) : nothing
 		end
 	end
 	my_println("Training data created.")

@@ -19,7 +19,7 @@ function show(io::IO, sys::GCMC_System) # FIXME does not work properly yet with 
 		end
 	end
 	# draw box
-	p = plot!(p, [0-sys.σ/4, sys.L+sys.σ/4, sys.L+sys.σ/4, -sys.σ/4, -sys.σ/4], [-sys.σ/4, -sys.σ/4, sys.L+sys.σ/4, sys.L+sys.σ/4, -sys.σ/4], linewidth=sys.σ/sys.L*230, linecolor=:black)
+	p = plot!(p, [-sys.σ/2, sys.L+sys.σ/4, sys.L+sys.σ/4, -sys.σ/4, -sys.σ/2], [-sys.σ/2, -sys.σ/4, sys.L+sys.σ/4, sys.L+sys.σ/4, -sys.σ/2], linewidth=sys.σ/sys.L*230, linecolor=:black)
 
 	display(p)
 end

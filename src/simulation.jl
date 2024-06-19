@@ -66,11 +66,14 @@ function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_int
 	task_packages = [tasks[i:threads:end] for i in 1:threads]
 	Threads.@threads for is in task_packages
 		for i in is
-			rhos[:, :, i], gs[:, i], obss[i] = simulate_once(deepcopy(sys), steps, therm_steps, sample_interval; obs=obs, track_g=false)
+			res = simulate_once(deepcopy(sys), steps, therm_steps, sample_interval; obs=obs, track_g=false)
+			rhos[:, :, i] = res[1]
+			if track_g; gs[:, i] = res[2]; end
+			obss[i] = res[3]
 		end
 	end
-	
 	rho = mean(rhos, dims=3)[:, :, 1]
+	
 	obs = mean(obss, dims=1)
 	g = mean(gs, dims=2)[:, 1]
 	return rho, g, obs
