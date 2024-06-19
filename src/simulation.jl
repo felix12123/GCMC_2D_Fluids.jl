@@ -15,6 +15,7 @@ function update_histogram!(hist::Histogram, sys::GCMC_System)
 	hist.count += 1
 end
 function update_g_histogram!(hist::g_Histogram, sys::GCMC_System)
+	rij::Float64 = 0.0
 	for i in eachindex(sys.positions)
 		for j in i+1:sys.N
 			rij = norm(sys.positions[i] .- sys.positions[j])
@@ -27,10 +28,10 @@ function update_g_histogram!(hist::g_Histogram, sys::GCMC_System)
 	hist.count += 1
 end
 
-function simulate_once(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; obs::Vector=[])
+function simulate_once(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; obs::Vector=[], track_g=false)
 	obs_vals = zeros(ceil(Int, steps/sample_interval), length(obs))
 	hist = Histogram(sys)
-	g_hist = g_Histogram(sys)
+	if track_g; g_hist = g_Histogram(sys); end
 
 	for _ in 1:therm_steps
 		step!(sys)
@@ -40,13 +41,16 @@ function simulate_once(sys::GCMC_System, steps::Int64, therm_steps::Int64, sampl
 		if i % sample_interval == 0
 			obs_vals[ceil(Int, i/sample_interval), :] = [o(sys) for o in obs]
 			update_histogram!(hist, sys)
-			update_g_histogram!(g_hist, sys)
+			if track_g; update_g_histogram!(g_hist, sys); end
 		end
 	end
-	return hist.ρ/hist.count/(sys.dx^2), g_hist.ρ / g_hist.count, obs_vals
+	rho = hist.ρ/hist.count/(sys.dx^2)
+
+	g = track_g ? g_hist.ρ / g_hist.count : nothing
+	return rho, g, obs_vals
 end
 
-function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; obs::Vector=[], repetitions::Int=1, threads::Int=Threads.nthreads())
+function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; obs::Vector=[], repetitions::Int=1, threads::Int=Threads.nthreads(), track_g=false)
 	if repetitions == 1
 		return simulate_once(sys, steps, therm_steps, sample_interval; obs=obs)
 	end
@@ -62,7 +66,7 @@ function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_int
 	task_packages = [tasks[i:threads:end] for i in 1:threads]
 	Threads.@threads for is in task_packages
 		for i in is
-			rhos[:, :, i], gs[:, i], obss[i] = simulate_once(deepcopy(sys), steps, therm_steps, sample_interval; obs=obs)
+			rhos[:, :, i], gs[:, i], obss[i] = simulate_once(deepcopy(sys), steps, therm_steps, sample_interval; obs=obs, track_g=false)
 		end
 	end
 	
