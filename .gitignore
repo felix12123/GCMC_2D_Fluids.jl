@@ -1,1 +1,7 @@
 /Manifest.toml
+
+# dont include the data files
+*.dat
+
+# media
+*.png

@@ -51,7 +51,7 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 				atomic_add!(acceptances, 1)
 			else
 				atomic_add!(rejections, 1)
-				update!(P, showvalues=[(:acc, acceptances[]), (:rej, rejections[])])
+				verbose ? update!(P, showvalues=[(:acc, acceptances[]), (:rej, rejections[])]) : nothing
 				continue
 			end
 

@@ -52,7 +52,7 @@ end
 
 function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; obs::Vector=[], repetitions::Int=1, threads::Int=Threads.nthreads(), track_g=false)
 	if repetitions == 1
-		return simulate_once(sys, steps, therm_steps, sample_interval; obs=obs)
+		return simulate_once(sys, steps, therm_steps, sample_interval; obs=obs, track_g=track_g)
 	end
 
 	# initialize variables
@@ -66,7 +66,7 @@ function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_int
 	task_packages = [tasks[i:threads:end] for i in 1:threads]
 	Threads.@threads for is in task_packages
 		for i in is
-			res = simulate_once(deepcopy(sys), steps, therm_steps, sample_interval; obs=obs, track_g=false)
+			res = simulate_once(deepcopy(sys), steps, therm_steps, sample_interval; obs=obs, track_g=track_g)
 			rhos[:, :, i] = res[1]
 			if track_g; gs[:, i] = res[2]; end
 			obss[i] = res[3]
