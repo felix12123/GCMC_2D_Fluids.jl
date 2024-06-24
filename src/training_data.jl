@@ -3,7 +3,12 @@ using ProgressMeter, DelimitedFiles, Base.Threads
 function get_c1(sys::GCMC_System, rho::Matrix{<:Real})::Matrix
 	dx = sys.dx
 	xs = Iterators.product(dx/2:dx:L, dx/2:dx:L)
-	get_c1 = @. log(rho) - (sys.μ - sys.Vext(xs)) * sys.β
+	@. log(rho) - (sys.μ - sys.Vext(xs)) * sys.β
+end
+function get_c1(sys::GCMC_System, rho::Vector{<:Real})::Vector
+	dx = sys.dx
+	xs = Iterators.product(dx/2:dx:L, dx/2:dx:L)
+	@. log(rho) - (sys.μ - sys.Vext(xs)) * sys.β
 end
 
 function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
