@@ -46,7 +46,7 @@ function create_training_data_1D(opt::GCMC_TrainingData, verbose::Bool=false)
 	for _ in 1:20
 		x = rand() * opt.L
 		Vs = [Vext([x, rand() * opt.L]) for _ in 1:100]
-		if !all(diff(Vs) .≈ 0)
+		if !all(diff(filter(isfinite, Vs)) .≈ 0)
 			error("The potential is not 1D")
 		end
 	end

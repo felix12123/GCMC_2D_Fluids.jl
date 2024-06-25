@@ -1,3 +1,5 @@
+using Statistics
+
 function step!(sys::GCMC_System)
 	if rand() < sys.move_prob
 		try_move!(sys)
