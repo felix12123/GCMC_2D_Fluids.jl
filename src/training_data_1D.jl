@@ -59,6 +59,10 @@ function create_training_data_1D(opt::GCMC_TrainingData, verbose::Bool=false)
 	folder = opt.folder
 	files = filter(x -> occursin(".dat", x), readdir(folder, join=true))
 
+	if !isdir(folder * "_1D")
+		mkdir(folder * "_1D")
+	end
+
 	for file in files
 		data = readdlm(file, ';')
 		c1 = data[:, 1]
@@ -79,7 +83,7 @@ function create_training_data_1D(opt::GCMC_TrainingData, verbose::Bool=false)
 
 		# save the data
 		data_1D = [vec(c1_1D) vec(rho_1D)]
-		writedlm(file, data_1D, ';')
+		writedlm(opt.folder * "_1D/" * basename(file), data_1D, ';')
 	end
 
 	
