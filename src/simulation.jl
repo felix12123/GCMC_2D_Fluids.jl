@@ -12,7 +12,7 @@ end
 
 function update_histogram!(hist::Histogram, sys::GCMC_System)
 	for pos in sys.positions
-		hist.ρ[floor(Int, pos[1]/hist.dx)+1, floor(Int, pos[2]/hist.dx)+1] += 1
+		hist.ρ[clamp(floor(Int, pos[1]/hist.dx)+1, 1, size(hist.ρ, 1)), clamp(floor(Int, pos[2]/hist.dx)+1, 1, size(hist.ρ, 2))] += 1
 	end
 	hist.count += 1
 end

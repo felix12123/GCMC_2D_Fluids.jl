@@ -33,12 +33,12 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 	tasks = 1:N*50
 	task_bundels = [tasks[i:opt.threads[1]:end] for i in 1:opt.threads[1]]
 	
-	update!(P, 0, showvalues=[(:acc, acceptances[]), (:rej, rejections[])])
+	verbose && update!(P, 0, showvalues=[(:acc, acceptances[]), (:rej, rejections[])])
 	Threads.@threads for ns in task_bundels
 		for _ in ns
 			if file_number[] > N # if we have enough files,
 				stop_computation[] = true
-				println(" we have ", count(x -> occursin(r"data.*.dat", x), readdir(data_folder)), " files, which is enough.")
+				verbose && println(" we have ", count(x -> occursin(r"data.*.dat", x), readdir(data_folder)), " files, which is enough.")
 				break
 			end
 
