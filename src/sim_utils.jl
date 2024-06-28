@@ -7,74 +7,30 @@ function energy(sys::GCMC_System, i::Int)
 		@warn "Particle $i does not exist in the system."
 		return 0
 	end
-	sys.Vext(sys.positions[i])
+	sys.Vext(sys.positions[i, :])
 end
 # Energy of a 
 function energy(sys::GCMC_System, is::AbstractRange{Int}=1:sys.N)
-	sum(sys.Vext.(sys.positions[is]))
+	sum(sys.Vext.(eachrow(sys.positions[is,:])))
 end
 
 
 # check if a particle can be inserted
 function is_colliding_small(sys::GCMC_System, pos::Tuple{<:Real, <:Real})
-	if isempty(sys.positions)
-		return false
-	end
-
-	# if any([norm(pos .- pos_i) < sys.σ for pos_i in sys.positions])
-	# 	return true
-	# end
-	for pos_i in sys.positions
-		if norm(pos .- pos_i) < sys.σ
+	for i in 1:sys.N
+		if norm(mod.(pos .- sys.positions[i,:] .+ sys.σ, sys.L) .- sys.σ) < sys.σ
 			return true
 		end
 	end
-
-	distances = [norm(mod.(pos .- pos_i .+ sys.σ, sys.L) .- sys.σ) for pos_i in sys.positions]
-	if any(distances .< sys.σ)
-		return true
-	end
-	# # if particle is partly outside the box, check periodic boundary conditions
-	# if pos[1] < sys.σ
-	# 	# check if the particle is close to the corner
-	# 	if pos[2] < sys.σ
-	# 		new_pos = pos .+ [sys.L, sys.L]
-	# 		if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
-	# 			return true
-	# 		end
-	# 	end
-	# 	new_pos = pos .+ [sys.L, 0]
-	# 	if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
-	# 		return true
-	# 	end
-	# end
-	# if pos[1] > sys.L - sys.σ
-	# 	new_pos = pos .- [sys.L, 0]
-	# 	if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
-	# 		return true
-	# 	end
-	# end
-	# if pos[2] < sys.σ
-	# 	new_pos = pos .+ [0, sys.L]
-	# 	if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
-	# 		return true
-	# 	end
-	# end
-	# if pos[2] > sys.L - sys.σ
-	# 	new_pos = pos .- [0, sys.L]
-	# 	if any([norm(new_pos .- pos_i) < sys.σ for pos_i in sys.positions])
-	# 		return true
-	# 	end
-	# end
 	return false
 end
 
 import Base.insert!
-function insert!(sys::GCMC_System, pos::Tuple{<:Real, <:Real}, check_col::Bool=true)
+function insert!(sys::GCMC_System, pos::Union{Vector{<:Real}, Tuple{<:Real, <:Real}}, check_col::Bool=true)
 	if check_col && sys.is_colliding(sys, pos)
 		return false
 	end
-	push!(sys.positions, Float64.(pos))
+	sys.positions[sys.N+1, :] .= Float64.(pos)
 	sys.N += 1
 	return true
 end
@@ -84,7 +40,8 @@ function delete!(sys::GCMC_System, i::Int)
 	if i > sys.N
 		return false
 	end
-	deleteat!(sys.positions, i)
+	sys.positions[i,:] .= sys.positions[sys.N,:]
+	sys.positions[sys.N,:] .= [NaN64, NaN64]
 	sys.N -= 1
 end
 
@@ -135,27 +92,32 @@ function try_move!(sys::GCMC_System)
 
 	i = rand(1:sys.N) # Random particle
 
-	pos = sys.positions[i]
+	pos = sys.positions[i,:]
 	new_pos = mod.(pos .+ randn(2) * sys.mobility, sys.L) |> Tuple # Random move
 
-	E1 = energy(sys, i) # Energy before the move
-
+	# check if new position is colliding, if yes we can save time and not calculate the energy
 	delete!(sys, i)
-
-	if insert!(sys, new_pos)
-		E2 = energy(sys, sys.N) # Energy after the move
-		dE = E2-E1 # Energy difference
-
-		# FIXME this might be wrong:
-		α_move = min(1, exp(-sys.β * dE)) # Acceptance probability
-
-		if rand() < α_move # Accept the move
-			return true
-		end
-		delete!(sys, sys.N)
+	if sys.is_colliding(sys, new_pos)
+		insert!(sys, pos, false) # Reinsert the particle
+		return false
 	end
 
-	insert!(sys, pos, false) # Reinsert the particle
+	insert!(sys, pos, false) # reinsert at old pos, no check needed since we just deleted it
+	E1 = energy(sys, i) # Energy before the move
+	delete!(sys, sys.N)
+
+	insert!(sys, new_pos, false)
+	E2 = energy(sys, sys.N) # Energy after the move
+	dE = E2-E1 # Energy difference
+
+	# FIXME this might be wrong:
+	α_move = min(1, exp(-sys.β * dE)) # Acceptance probability
+
+	if rand() < α_move # Accept the move
+		return true
+	end
+
+	# insert!(sys, pos, false) # Reinsert the particle
 	return false # Move rejected
 end
 
