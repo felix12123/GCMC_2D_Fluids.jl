@@ -38,7 +38,7 @@ mutable struct GCMC_TrainingData
 			dx::Real=0.05,
 			steps::Real=10^6,
 			therm_steps::Real=3*10^4,
-			sample_interval::Real=1000,
+			sample_interval::Real=500,
 			threads::Union{<:Real, Tuple{<:Real, <:Real}}=Threads.nthreads(),
 			repetitions::Real=1,
 			num_systems::Real=20,

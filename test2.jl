@@ -9,7 +9,7 @@ include("src/simulation.jl")
 include("src/training_data.jl")
 
 L = 10
-dx = 0.1
+dx = 0.03
 
 
 
@@ -49,12 +49,13 @@ to = GCMC_TrainingData("data",
 	L=L,
 	Vext_generator=Vext_gen,
 	steps=1e7,
-	num_systems=100,
+	num_systems=5,
 	repetitions=100,
 	dx=dx,
-	accept_condition=accept_condition,
-	rho_smooth_func=smooth_rho,
-	μ_range=(-5, 5),
+	threads=(2, Threads.nthreads()÷2),
+	# accept_condition=accept_condition,
+	# rho_smooth_func=smooth_rho,
+	μ_range=(-5, 15),
 )
 
 # create_training_data(to, true)
@@ -79,3 +80,33 @@ function start()
 	println("Accepted: ", accs, " Rejected: ", rejs)
 end
 # start()
+
+
+to = GCMC_TrainingData("fwefwegweg",
+               L=L,
+               Vext_generator=Vext_gen,
+               steps=1e7,
+               num_systems=1,
+               repetitions=1,
+               dx=dx,
+               threads=(1, 1),
+               # accept_condition=accept_condition,
+               # rho_smooth_func=smooth_rho,
+               μ_range=(-5, 15),
+)
+if isdir("fwefwegweg")
+	rm("fwefwegweg", recursive=true)
+end
+@time create_training_data(to, false)
+if isdir("fwefwegweg")
+	rm("fwefwegweg", recursive=true)
+end
+
+using ProfileView, Profile, BenchmarkTools
+sys = GCMC_System(L=10, Vext=Vext_gen(), μ=10)
+simulate_once(sys, 10^5, 1000, 1000)
+Profile.clear()
+
+@benchmark try_move!(sys) seconds=10 samples=100_000
+# ProfileView.@profview sum(1:10)
+ProfileView.@profview create_training_data(to, false)# war 40 sec mit unoptimized
