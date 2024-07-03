@@ -68,8 +68,9 @@ function create_training_data_1D(opt::GCMC_TrainingData, verbose::Bool=false)
 		c1 = data[:, 1]
 		rho = data[:, 2]
 
-		if length(c1) < opt.L^2 / opt.dx^2
-			@warn "Data file $file is too short, skipping."
+		lines_wanted = floor(opt.L / opt.dx)^2
+		if length(c1) < lines_wanted
+			@warn "Data file $file is too short, skipping. it has $(length(c1))/$lines_wanted data points."
 			continue
 		end
 
