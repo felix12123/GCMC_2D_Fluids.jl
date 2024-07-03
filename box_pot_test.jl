@@ -48,23 +48,23 @@ function generate_Vext(L::Number; num_sin=4, num_lin=rand(1:5), wall=true)
 end
 
 function Vext_gen()
-	Vext1 = generate_Vext(L)
-	Vext2 = generate_Vext(L)
+	Vext1 = generate_Vext(L, num_lin=0)
+	Vext2 = generate_Vext(L, num_lin=0)
 
 	Vext(x) = Vext1(x[1]) + Vext2(x[2])
 	return Vext
 end
 
+to = GCMC_TrainingData("box_data3",
 
-to = GCMC_TrainingData("box_data2",
 	L=L,
 	dx=dx,
 	Vext_generator=Vext_gen,
-	steps=1e7,
+	steps=3e6,
 	num_systems=50,
-	repetitions=25,
-	threads=(4,Threads.nthreads()-4),
-	μ_range=(-5, 20),
+	repetitions=100,
+	threads=(2,Threads.nthreads()-2),
+	μ_range=(-5, 15),
 )
 
 create_training_data(to, true)
@@ -98,7 +98,7 @@ function convert_2D_to1D(folder::String, target_folder::String)
 	end
 end
 
-convert_2D_to1D("1D_data", "1D_data_1D")
+# convert_2D_to1D("1D_data", "1D_data_1D")
 
 # convert_2D_to1D("test_folder", "test_folder_1D")
 
