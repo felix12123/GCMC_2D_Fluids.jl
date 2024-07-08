@@ -45,7 +45,7 @@ to = GCMC_TrainingData("1d_dx0_03",
 	dx=dx,
 	Vext_generator=Vext_gen,
 	steps=2e7,
-	num_systems=500,
+	num_systems=10,
 	repetitions=250,
 	# accept_condition=accept_condition,
 	# rho_smooth_func=smooth_rho,
@@ -69,7 +69,7 @@ function show_data_folder(folder::String, pause = 1)
 	end
 end
 
-# show_data_folder_1D("1d_dx0_03_1D")
+show_data_folder_1D("1d_dx0_03_1D")
 
 function show_data_folder_1D(folder::String, pause = 1)
 	files = filter(x -> occursin(".dat", x), readdir(folder, join=true))

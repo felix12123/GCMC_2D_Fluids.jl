@@ -90,7 +90,7 @@ mutable struct Histogram
 	function Histogram(sys::GCMC_System)
 		hist_len = floor(Int, sys.L/sys.dx)
 		rho = zeros(hist_len, hist_len)
-		new(dx, rho, 0)
+		new(sys.dx, rho, 0)
 	end
 end
 

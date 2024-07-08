@@ -15,7 +15,7 @@ dx = 0.1
 dx_inv = Int(1/dx)
 
 Vext_gen = function()
-	po = PotentialOptions(L=L, num_sin=(5, 8), sin_amp=(0, 1), sin_periods=(1, 3), periodic=true, wall=:none)
+	po = PotentialOptions(L=L, num_sin=(5, 8), sin_amp=(0, 1), sin_periods=(1, 3), periodic=true, wall=:box)
 	generate_random_potential(po)
 end
 
@@ -27,4 +27,6 @@ heatmap(v) |> display
 
 # simulate and show the result
 sys = GCMC_System(L=L, dx=0.1, Vext=V, μ=0)
-@pprof simulate_once(sys, 1e6 |> Int, 4e4|>Int)#, repetitions=1)[1]
+a = simulate(sys, 1e6 |> Int, 4e4|>Int, repetitions=5)[1]
+
+heatmap(a) |> display

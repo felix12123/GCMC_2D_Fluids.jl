@@ -1,5 +1,6 @@
 mutable struct PotentialOptions
 	L::Float64
+	dx::Float64
 	num_sin::Tuple{Int, Int}
 	sin_amp::Tuple{Float64, Float64}
 	sin_periods::Tuple{Float64, Float64}
@@ -7,7 +8,7 @@ mutable struct PotentialOptions
 	wall::Symbol
 	wall_thickness::Tuple{Float64, Float64}
 
-	function PotentialOptions(;L::Int, num_sin::Union{Int, Tuple{Int, Int}}=(1:5), sin_amp::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), sin_periods::Union{<:Real, Tuple{<:Real, <:Real}}=(1,3), periodic::Bool=true, wall::Symbol=:none, wall_thickness::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1))
+	function PotentialOptions(;L::Int, num_sin::Union{Int, Tuple{Int, Int}}=(1:5), sin_amp::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), sin_periods::Union{<:Real, Tuple{<:Real, <:Real}}=(1,3), periodic::Bool=true, wall::Symbol=:none, wall_thickness::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), dx::Number=0.1)
 		if num_sin isa Int
 			num_sin = (1, num_sin)
 		end
@@ -29,7 +30,7 @@ mutable struct PotentialOptions
 		if wall_thickness isa Real
 			wall_thickness = (0, wall_thickness)
 		end
-		new(L, num_sin, sin_amp, sin_periods, periodic, wall, wall_thickness)
+		new(L, dx, num_sin, sin_amp, sin_periods, periodic, wall, wall_thickness)
 	end
 end
 
@@ -61,6 +62,7 @@ function generate_random_potential(po::PotentialOptions)
 		@warn "Wall type \"$(po.wall)\" not implemented, no wall is being used."
 	end
 	wall_thickness = rand() * (po.wall_thickness[2] - po.wall_thickness[1]) + po.wall_thickness[1]
+	wall_thickness -= wall_thickness % po.dx
 	phase_shift = rand(num_sin) .* 2pi
 	function V(xy)
 		s = 0.0

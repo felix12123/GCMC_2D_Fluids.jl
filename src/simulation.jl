@@ -53,11 +53,11 @@ function simulate_once(sys::GCMC_System, steps::Int64, therm_steps::Int64, sampl
 end
 
 function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; obs::Vector=[], repetitions::Int=1, threads::Int=Threads.nthreads(), track_g=false)
-	if mean(sys.Vext.(Iterators.product(sys.dx/2:sys.dx:sys.L, sys.dx/2:sys.dx:sys.L)) .- sys.μ .> 4) > 0.05
-		@warn "Warning: Vext is too high, the system will likely contain lots of ρ=0. returning empty arrays to avoid unnecessary computation."
-		s = sys.L/sys.dx |> floor |> Int
-		return zeros(Float64, s, s), zeros(Float64, s), []
-	end
+	# if mean(sys.Vext.(Iterators.product(sys.dx/2:sys.dx:sys.L, sys.dx/2:sys.dx:sys.L)) .- sys.μ .> 4) > 0.05
+	# 	@warn "Warning: Vext is too high, the system will likely contain lots of ρ=0. returning empty arrays to avoid unnecessary computation."
+	# 	s = sys.L/sys.dx |> floor |> Int
+	# 	return zeros(Float64, s, s), zeros(Float64, s), []
+	# end
 	if repetitions == 1
 		return simulate_once(sys, steps, therm_steps, sample_interval; obs=obs, track_g=track_g)
 	end
@@ -72,7 +72,7 @@ function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_int
 	tasks = 1:repetitions
 	task_packages = [tasks[i:threads:end] for i in 1:threads]
 
-	Threads.@threads :static for n in 1:threads
+	Threads.@threads for n in 1:threads
 		is = task_packages[n]
 		for i in is
 			res = simulate_once(deepcopy(sys), steps, therm_steps, sample_interval; obs=obs, track_g=track_g)

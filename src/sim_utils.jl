@@ -110,14 +110,14 @@ function try_move!(sys::GCMC_System)
 	E2 = energy(sys, sys.N) # Energy after the move
 	dE = E2-E1 # Energy difference
 
-	# FIXME this might be wrong:
 	α_move = min(1, exp(-sys.β * dE)) # Acceptance probability
 
 	if rand() < α_move # Accept the move
 		return true
 	end
 
-	# insert!(sys, pos, false) # Reinsert the particle
+	delete!(sys, sys.N)
+	insert!(sys, pos, false) # Reinsert the particle
 	return false # Move rejected
 end
 
