@@ -33,7 +33,7 @@ function accept_condition(rho)
 end
 
 
-to = GCMC_TrainingData("dx001-1e9steps_1dpot",
+to = GCMC_TrainingData("data/dx001-1e9steps_1dpot",
                L=L,
                Vext_generator=Vext_gen,
                steps=1e7,
