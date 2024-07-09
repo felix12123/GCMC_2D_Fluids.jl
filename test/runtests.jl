@@ -1,4 +1,5 @@
-import GCMC_2D_Fluids: GCMC_System, insert!, simulate, try_insert!, try_move!, try_delete!, delete!
+using GCMC_2D_Fluids
+import GCMC_2D_Fluids: try_move!, try_insert!
 using Test, Statistics
 
 
