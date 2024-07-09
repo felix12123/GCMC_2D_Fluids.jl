@@ -56,6 +56,7 @@ mutable struct GCMC_TrainingData
 	end
 end
 
+
 mutable struct GCMC_System
 	L::Float64 # Box length
 	N::Int64 # Number of particles

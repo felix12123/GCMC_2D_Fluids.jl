@@ -1,13 +1,13 @@
-# include("src/GCMC_2D_Fluids.jl")
+# include("../src/GCMC_2D_Fluids.jl")
 using Statistics, ImageFiltering, Plots, LinearAlgebra, PProf
 import PlotlyJS: surface
 
-include("src/potentials.jl")
-include("src/structs.jl")
-include("src/utils.jl")
-include("src/sim_utils.jl")
-include("src/simulation.jl")
-include("src/training_data.jl")
+include("../src/potentials.jl")
+include("../src/structs.jl")
+include("../src/utils.jl")
+include("../src/sim_utils.jl")
+include("../src/simulation.jl")
+include("../src/training_data.jl")
 
 # Create a system
 L = 16

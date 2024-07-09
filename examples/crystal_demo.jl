@@ -1,12 +1,12 @@
 using Statistics, ImageFiltering, Plots, LinearAlgebra, PProf
 import PlotlyJS: surface
 
-include("src/potentials.jl")
-include("src/structs.jl")
-include("src/utils.jl")
-include("src/sim_utils.jl")
-include("src/simulation.jl")
-include("src/training_data.jl")
+include("../src/potentials.jl")
+include("../src/structs.jl")
+include("../src/utils.jl")
+include("../src/sim_utils.jl")
+include("../src/simulation.jl")
+include("../src/training_data.jl")
 
 
 gauss(x, mu, sig) = 1/sqrt(2π*sig^2) * exp(-1/2 * ((x-mu)/sig)^2)

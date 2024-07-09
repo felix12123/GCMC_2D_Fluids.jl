@@ -1,7 +1,20 @@
 module GCMC_2D_Fluids
 
 # Write your package code here.
-export GCMC_System, show, simulate, GCMC_Simulation, create_training_data, GCMC_TrainingData
+export GCMC_System,
+	show,
+	simulate,
+	GCMC_Simulation,
+	GCMC_TrainingData,
+	create_training_data,
+	create_training_data_1D,
+	generate_random_potential,
+	generate_random_potential_1D,
+	PotentialOptions,
+	get_c1,
+	make_res_filter,
+	filter_reservoir,
+	plot_data_folder
 
 include("structs.jl")
 include("utils.jl")

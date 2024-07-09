@@ -22,7 +22,9 @@ function plot_data_folder(folder::String, plot_folder::String=folder*"/plots"; p
 		L = Int(sqrt(size(d, 1)))
 		rho = reshape(d[:, 2], L, L)
 		c1 = reshape(d[:, 1], L, L)
-		plt = plot_rho(rho)
+		plt_r = plot_rho(rho)
+		plt_c = plot_rho(c1)
+		plt = plot(plt_r, plt_c, layout=(1, 2), size=(800, 400))
 		savefig(plt, plot_folder*"/$(basename(file)[1:end-4]).png")
 	end
 	
