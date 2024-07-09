@@ -8,7 +8,7 @@ mutable struct PotentialOptions
 	wall::Symbol
 	wall_thickness::Tuple{Float64, Float64}
 
-	function PotentialOptions(;L::Int, num_sin::Union{Int, Tuple{Int, Int}}=(1:5), sin_amp::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), sin_periods::Union{<:Real, Tuple{<:Real, <:Real}}=(1,3), periodic::Bool=true, wall::Symbol=:none, wall_thickness::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), dx::Number=0.1)
+	function PotentialOptions(;L::Int, num_sin::Union{Int, Tuple{Int, Int}}=(1, 5), sin_amp::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), sin_periods::Union{<:Real, Tuple{<:Real, <:Real}}=(1,3), periodic::Bool=true, wall::Symbol=:none, wall_thickness::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), dx::Number=0.1)
 		if num_sin isa Int
 			num_sin = (1, num_sin)
 		end
