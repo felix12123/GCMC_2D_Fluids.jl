@@ -1,5 +1,17 @@
 module GCMC_2D_Fluids
 
+
+include("visualisation.jl")
+
+include("structs.jl")
+include("utils.jl")
+include("potentials.jl")
+include("sim_utils.jl")
+include("simulation.jl")
+include("training_data.jl")
+include("training_data_1D.jl")
+include("reservoir.jl")
+
 # Write your package code here.
 export GCMC_System,
 	show,
@@ -16,15 +28,8 @@ export GCMC_System,
 	filter_reservoir,
 	plot_data_folder
 
-include("potentials.jl")
-include("reservoir.jl")
-include("sim_utils.jl")
-include("simulation.jl")
-include("structs.jl")
-include("training_data.jl")
-include("training_data_1D.jl")
-include("utils.jl")
-include("visualisation.jl")
+
+
 
 
 

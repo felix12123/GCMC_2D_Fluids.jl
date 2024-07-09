@@ -16,9 +16,9 @@ end
 
 
 # check if a particle can be inserted
-function is_colliding_small(sys::GCMC_System, pos::Tuple{<:Real, <:Real})
+function is_colliding_small(sys::GCMC_System, x::Real, y::Real)
 	for i in 1:sys.N
-		if norm(mod.(pos .- sys.positions[i,:] .+ sys.σ, sys.L) .- sys.σ) < sys.σ
+		if (mod(x - sys.positions[i,1] + sys.σ, sys.L) .- sys.σ)^2 + (mod(y - sys.positions[i,2] + sys.σ, sys.L) .- sys.σ)^2 < sys.σ^2
 			return true
 		end
 	end
@@ -26,11 +26,11 @@ function is_colliding_small(sys::GCMC_System, pos::Tuple{<:Real, <:Real})
 end
 
 import Base.insert!
-function insert!(sys::GCMC_System, pos::Union{Vector{<:Real}, Tuple{<:Real, <:Real}}, check_col::Bool=true)
-	if check_col && sys.is_colliding(sys, pos)
+function insert!(sys::GCMC_System, x::Real, y::Real, check_col::Bool=true)
+	if check_col && sys.is_colliding(sys, x, y)
 		return false
 	end
-	sys.positions[sys.N+1, :] .= Float64.(pos)
+	sys.positions[sys.N+1, :] .= Float64(x), Float64(y)
 	sys.N += 1
 	return true
 end
@@ -47,11 +47,11 @@ end
 
 function try_insert!(sys::GCMC_System)
 	x, y = rand(2) * sys.L # Random position
-	if sys.is_colliding(sys, (x, y)) # Check if the position is already occupied
+	if sys.is_colliding(sys, x, y) # Check if the position is already occupied
 		return false
 	end
 
-	insert!(sys, (x, y), false) # Insert the particle
+	insert!(sys, x, y, false) # Insert the particle
 
 	dE = energy(sys, sys.N) - sys.μ # Energy difference
 	# FIXME this might be wrong:
@@ -92,21 +92,22 @@ function try_move!(sys::GCMC_System)
 
 	i = rand(1:sys.N) # Random particle
 
-	pos = sys.positions[i,:]
-	new_pos = mod.(pos .+ randn(2) * sys.mobility, sys.L) |> Tuple # Random move
+	x, y = sys.positions[i,:]
+	dx, dy = randn(2) * sys.mobility
+	new_x, new_y = mod(x+dx, sys.L), mod(y+dy, sys.L) # Random move
 
 	# check if new position is colliding, if yes we can save time and not calculate the energy
 	delete!(sys, i)
-	if sys.is_colliding(sys, new_pos)
-		insert!(sys, pos, false) # Reinsert the particle
+	if sys.is_colliding(sys, new_x, new_y)
+		insert!(sys, x, y, false) # Reinsert the particle
 		return false
 	end
 
-	insert!(sys, pos, false) # reinsert at old pos, no check needed since we just deleted it
+	insert!(sys, x, y, false) # reinsert at old pos, no check needed since we just deleted it
 	E1 = energy(sys, i) # Energy before the move
 	delete!(sys, sys.N)
 
-	insert!(sys, new_pos, false)
+	insert!(sys, new_x, new_y, false)
 	E2 = energy(sys, sys.N) # Energy after the move
 	dE = E2-E1 # Energy difference
 
@@ -117,7 +118,7 @@ function try_move!(sys::GCMC_System)
 	end
 
 	delete!(sys, sys.N)
-	insert!(sys, pos, false) # Reinsert the particle
+	insert!(sys, x, y, false) # Reinsert the particle
 	return false # Move rejected
 end
 
