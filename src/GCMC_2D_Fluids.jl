@@ -16,9 +16,16 @@ export GCMC_System,
 	filter_reservoir,
 	plot_data_folder
 
-include("structs.jl")
-include("utils.jl")
+include("potentials.jl")
+include("reservoir.jl")
 include("sim_utils.jl")
 include("simulation.jl")
+include("structs.jl")
+include("training_data.jl")
+include("training_data_1D.jl")
+include("utils.jl")
+include("visualisation.jl")
+
+
 
 end
