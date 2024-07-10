@@ -22,13 +22,12 @@ function test_simulation()
         dx = 0.1
         xs = dx/2:dx:L
         xys = Iterators.product(xs, xs)
-        function Vext(xy)
-            if any(xy .< 1) || any(xy .> L-1)
+        function Vext(x, y)
+            if x < 1 || x > L-1 || y < 1 || y > L-1
                 return Inf
             end
             return 0.0
         end
-        v = Vext.(xys)
 
         sys = GCMC_System(L=L, σ=1.0, μ=0.0, β=1.0, Vext=Vext, dx=dx)
         a = simulate(sys, 1e5 |> Int, 4e4|>Int, repetitions=5)[1]
@@ -41,7 +40,7 @@ function test_simulation()
             xy2 = [x+dx/2, y-dx/2]
             xy3 = [x-dx/2, y+dx/2]
             xy4 = [x+dx/2, y+dx/2]
-            return min(V(xy1), V(xy2), V(xy3), V(xy4)) == Inf
+            return min(V(xy1...), V(xy2...), V(xy3...), V(xy4...)) == Inf
         end
 
         v_is_inf = findall(cell_is_inf.(Ref(Vext), xys, dx))
@@ -80,6 +79,6 @@ end
 
 @testset "GCMC_2D_Fluids.jl" begin
     # Write your tests here.
-    # test_collisions()
+    test_collisions()
     test_simulation()
 end

@@ -48,7 +48,7 @@ function generate_random_potential(po::PotentialOptions)
 	directions = zeros(Int, num_sin, 2)
 	if po.periodic
 		for i in 1:num_sin
-			(directions[i,:] .= rand([[1, 0], [0, 1]]))
+			directions[i,:] .= rand([[1, 0], [0, 1]])
 		end
 	else
 		for i in 1:num_sin
@@ -64,14 +64,14 @@ function generate_random_potential(po::PotentialOptions)
 	wall_thickness = rand() * (po.wall_thickness[2] - po.wall_thickness[1]) + po.wall_thickness[1]
 	wall_thickness -= wall_thickness % po.dx
 	phase_shift = rand(num_sin) .* 2pi
-	function V(xy)
+	function V(x, y)
 		s = 0.0
 		for i in 1:num_sin
-			s += sin(xy ⋅ directions[i, :] * 2pi / po.L * sin_periods[i] + phase_shift[i]) * sin_amps[i]
+			s += sin((x * directions[i, 1] + y * directions[i, 2]) * 2pi / po.L * sin_periods[i] + phase_shift[i]) * sin_amps[i]
 		end
 		
 		if po.wall == :box
-			if xy[1] < wall_thickness || xy[1] > po.L-wall_thickness || xy[2] < wall_thickness || xy[2] > po.L-wall_thickness
+			if x < wall_thickness || x > po.L-wall_thickness || y < wall_thickness || y > po.L-wall_thickness
 				s += Inf
 			end
 		end
@@ -80,37 +80,37 @@ function generate_random_potential(po::PotentialOptions)
 end
 
 
-Vext_sin(x; n::Int, A::Number, φ::Number, L::Number) = A * sin(2π * x * n / L + φ)
+# Vext_sin(x; n::Int, A::Number, φ::Number, L::Number) = A * sin(2π * x * n / L + φ)
 
-Vext_lin(x; x1::Number, x2::Number, E1::Number, E2::Number) = x > x1 && x < x2 ? E1 + (x - x1) * (E2 - E1) / (x2 - x1) : 0
+# Vext_lin(x; x1::Number, x2::Number, E1::Number, E2::Number) = x > x1 && x < x2 ? E1 + (x - x1) * (E2 - E1) / (x2 - x1) : 0
 
-Vext_wall(x; xw::Number, L::Number) = x < xw || x > L - xw ? Inf : 0
+# Vext_wall(x; xw::Number, L::Number) = x < xw || x > L - xw ? Inf : 0
 
-function generate_Vext(L::Number; num_sin=4, num_lin=rand(1:5), wall=true)
-    Avar = 1.0
-    sin_parameters = []
-    for n in 1:num_sin  # Generate random parameters for periodic sine functions with increasing frequency
-        push!(sin_parameters, (n = n, A = randn() * Avar, φ = rand() * 2π, L = L))
-    end
-    Evar = 1.0
-    lin_parameters = []
-    for _ in 1:num_lin  # Generate random parameters for discontinuous linear segments
-        push!(lin_parameters, (x1 = round(rand() * L, digits=2), x2 = round(rand() * L, digits=2), E1 = randn() * Evar, E2 = randn() * Evar))
-    end
-    xwmax = 1.0
-    wall_params = (xw = round(rand() * xwmax, digits=2), L = L)  # Set a random wall width
-    function (xy)  # Return a method which evaluates a combination of all functions with the chosen parameters above
-        result = 0.0
-		  x = xy[1]
-        for sin_params in sin_parameters
-            result += Vext_sin(x; sin_params...)
-        end
-        for lin_params in lin_parameters
-            result += Vext_lin(x; lin_params...)
-        end
-        if wall
-            result += Vext_wall(x; wall_params...)
-        end
-        result
-    end
-end
+# function generate_Vext(L::Number; num_sin=4, num_lin=rand(1:5), wall=true)
+#     Avar = 1.0
+#     sin_parameters = []
+#     for n in 1:num_sin  # Generate random parameters for periodic sine functions with increasing frequency
+#         push!(sin_parameters, (n = n, A = randn() * Avar, φ = rand() * 2π, L = L))
+#     end
+#     Evar = 1.0
+#     lin_parameters = []
+#     for _ in 1:num_lin  # Generate random parameters for discontinuous linear segments
+#         push!(lin_parameters, (x1 = round(rand() * L, digits=2), x2 = round(rand() * L, digits=2), E1 = randn() * Evar, E2 = randn() * Evar))
+#     end
+#     xwmax = 1.0
+#     wall_params = (xw = round(rand() * xwmax, digits=2), L = L)  # Set a random wall width
+#     function (xy)  # Return a method which evaluates a combination of all functions with the chosen parameters above
+#         result = 0.0
+# 		  x = x
+#         for sin_params in sin_parameters
+#             result += Vext_sin(x; sin_params...)
+#         end
+#         for lin_params in lin_parameters
+#             result += Vext_lin(x; lin_params...)
+#         end
+#         if wall
+#             result += Vext_wall(x; wall_params...)
+#         end
+#         result
+#     end
+# end

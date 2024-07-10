@@ -7,11 +7,11 @@ function energy(sys::GCMC_System, i::Int)
 		@warn "Particle $i does not exist in the system."
 		return 0
 	end
-	sys.Vext(sys.positions[i, :])
+	sys.Vext(sys.positions[i, :]...)
 end
 # Energy of a 
 function energy(sys::GCMC_System, is::AbstractRange{Int}=1:sys.N)
-	sum(sys.Vext.(eachrow(sys.positions[is,:])))
+	sum(sys.Vext.(sys.positions[is,1], sys.positions[is,2]))
 end
 
 
