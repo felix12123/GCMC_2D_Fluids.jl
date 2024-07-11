@@ -52,7 +52,7 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 
 			sys = GCMC_System(L=opt.L, σ=opt.σ, μ=μ, β=opt.β, Vext=Vext, mobility=opt.mobility, move_prob=opt.move_prob, insert_prob=opt.insert_prob, dx=opt.dx)
 
-			rho, _, _ = simulate(sys, opt.steps, opt.therm_steps, opt.sample_interval, track_g=false, repetitions=opt.repetitions, threads=opt.threads[2])
+			rho, _ = simulate(sys, opt.steps, opt.therm_steps, opt.sample_interval, track_g=false, repetitions=opt.repetitions, threads=opt.threads[2])
 			rho = opt.rho_smooth_func(rho, sys)
 
 			if opt.accept_condition(rho)
