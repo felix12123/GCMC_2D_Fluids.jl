@@ -101,6 +101,6 @@ mutable struct g_Histogram
 	ρ::Vector{Int}
 	count::Int
 	function g_Histogram(sys::GCMC_System)
-		new(dx, zeros(Int, floor(Int, sys.L/2/sys.dx)), 0)
+		new(sys.dx, zeros(Int, floor(Int, sys.L/2/sys.dx)), 0)
 	end
 end

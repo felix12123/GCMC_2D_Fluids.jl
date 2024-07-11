@@ -41,15 +41,33 @@ function filter_reservoir(res_folder::String, filter_func::Function, out_folder:
 		rho_0 = reshape(rho_0, L, L)
 		c1_0  = reshape(c1_0,  L, L)
 
-		l = Int(L÷downscale)
-		rho = zeros(l, l)
-		c1  = zeros(l, l)
+		# we need to get βμloc to recalculate c1 after we scaled down the density profile.
+		# c1 = log(ρ) - βμloc
+		# βμloc = log(ρ) - c1
+		βμloc_0 = log.(rho_0) .- c1_0
 
+		l = Int(L÷downscale)
+		rho   = zeros(l, l)
+		βμloc = zeros(l, l)
+
+		rho_window = zeros(downscale * downscale)
+		bmloc_window = zeros(downscale * downscale)
 		for ij in Iterators.product(1:l, 1:l)
 			i, j = ij
-			rho[i, j] = mean(rho_0[(i-1)*downscale+1:i*downscale, (j-1)*downscale+1:j*downscale])
-			c1[i, j]  = mean( c1_0[(i-1)*downscale+1:i*downscale, (j-1)*downscale+1:j*downscale])
+
+			# save the window of the original data that we want to mean
+			rho_window = vec(rho_0[(i-1)*downscale+1:i*downscale, (j-1)*downscale+1:j*downscale])
+			bmloc_window = vec(βμloc_0[(i-1)*downscale+1:i*downscale, (j-1)*downscale+1:j*downscale])
+
+			# filter out any Infs or NaNs of bmloc_window
+			if any(isfinite.(bmloc_window))
+				βμloc[i, j] = mean(bmloc_window[isfinite.(bmloc_window)])
+			else
+				βμloc[i, j] = -Inf
+			end
+			rho[i, j]    = mean(mean(rho_window))
 		end
+		c1 = log.(rho) .- βμloc
 
 		if filter_func(rho, c1)
 			writedlm(out_folder*"/$(basename(file)[1:end-4]).dat", [vec(c1) vec(rho)], ';')

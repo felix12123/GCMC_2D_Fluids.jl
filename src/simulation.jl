@@ -33,7 +33,7 @@ end
 function simulate_once(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; obs::Vector=[], track_g=false)
 	obs_vals = zeros(ceil(Int, steps/sample_interval), length(obs))
 	hist = Histogram(sys)
-	if track_g; g_hist = g_Histogram(sys); end
+	g_hist = g_Histogram(sys)
 
 	for _ in 1:therm_steps
 		step!(sys)
@@ -48,22 +48,21 @@ function simulate_once(sys::GCMC_System, steps::Int64, therm_steps::Int64, sampl
 	end
 	rho = hist.ρ/hist.count/(sys.dx^2)
 
-	g = track_g ? g_hist.ρ / g_hist.count : nothing
+	g = g_hist.ρ / g_hist.count
 	return rho, g, obs_vals
 end
 
-function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; obs::Vector=[], repetitions::Int=1, threads::Int=Threads.nthreads(), track_g=false)
+function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; repetitions::Int=1, threads::Int=Threads.nthreads(), track_g=false)
 	# if mean(sys.Vext.(Iterators.product(sys.dx/2:sys.dx:sys.L, sys.dx/2:sys.dx:sys.L)) .- sys.μ .> 4) > 0.05
 	# 	@warn "Warning: Vext is too high, the system will likely contain lots of ρ=0. returning empty arrays to avoid unnecessary computation."
 	# 	s = sys.L/sys.dx |> floor |> Int
 	# 	return zeros(Float64, s, s), zeros(Float64, s), []
 	# end
 	if repetitions == 1
-		return simulate_once(sys, steps, therm_steps, sample_interval; obs=obs, track_g=track_g)
+		return simulate_once(sys, steps, therm_steps, sample_interval; obs=[], track_g=track_g)
 	end
 
 	# initialize variables
-	obss = Vector{Any}(undef, repetitions)
 	s = sys.L/sys.dx |> floor |> Int
 	rhos = zeros(Float64, s, s, repetitions)
 	gs = zeros(Float64, floor(Int, sys.L/2/sys.dx), repetitions)
@@ -72,18 +71,19 @@ function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_int
 	tasks = 1:repetitions
 	task_packages = [tasks[i:threads:end] for i in 1:threads]
 
+	# deepcopy systems before looping and create results array
+	systems = [deepcopy(sys) for _ in 1:repetitions]
+	results::Vector{Tuple{Matrix{Float64}, Vector{Float64}}} = [(zeros(Float64, s, s), zeros(Float64, floor(Int, sys.L/2/sys.dx))) for _ in 1:repetitions]
 	Threads.@threads for n in 1:threads
 		is = task_packages[n]
 		for i in is
-			res = simulate_once(deepcopy(sys), steps, therm_steps, sample_interval; obs=obs, track_g=track_g)
-			rhos[:, :, i] .= res[1]
-			if track_g; gs[:, i] .= res[2]; end
-			obss[i] = res[3]
+			rho_i, g_i = simulate_once(systems[i], steps, therm_steps, sample_interval; track_g=track_g)
+			results[i][1] .= rho_i
+			results[i][2] .= g_i
 		end
 	end
 	rho = mean(rhos, dims=3)[:, :, 1]
 	
-	obs = mean(obss, dims=1)
 	g = mean(gs, dims=2)[:, 1]
-	return rho, g, obs
+	return rho, g
 end
