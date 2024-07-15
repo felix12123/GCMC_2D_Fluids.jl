@@ -64,8 +64,8 @@ function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_int
 
 	# initialize variables
 	s = sys.L/sys.dx |> floor |> Int
-	rhos = zeros(Float64, s, s, repetitions)
-	gs = zeros(Float64, floor(Int, sys.L/2/sys.dx), repetitions)
+	# rhos = zeros(Float64, s, s, repetitions)
+	# gs = zeros(Float64, floor(Int, sys.L/2/sys.dx), repetitions)
 
 	# create threads task packages
 	tasks = 1:repetitions
@@ -82,8 +82,13 @@ function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_int
 			results[i][2] .= g_i
 		end
 	end
-	rho = mean(rhos, dims=3)[:, :, 1]
+
+	rho = mean(first.(results))
+	rho_uncertaincy = zeros(s, s)
+	if repetitions > 1
+		rho_uncertaincy = std(first.(results))
+	end
 	
-	g = mean(gs, dims=2)[:, 1]
-	return rho, g
+	g = mean(last.(results))
+	return rho, g, rho_uncertaincy
 end

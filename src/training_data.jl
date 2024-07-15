@@ -14,15 +14,20 @@ function get_c1(sys::GCMC_System, rho::Vector{<:Real})::Vector
 end
 
 function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
-	my_println(x...) = if verbose; println(x...); end
-	my_println("Creating training data")
-	if !isdir(opt.folder)
-		my_println("Creating folder: ", opt.folder)
-		mkdir(opt.folder)
-	end
-
 	data_folder = opt.folder
 	N = opt.num_systems
+
+	my_println(x...) = if verbose; println(x...); end
+	my_println("Creating training data")
+	if !isdir(data_folder)
+		my_println("Creating folder: ", data_folder)
+		mkdir(data_folder)
+	end
+	if !isdir("$data_folder/uncertainy")
+		my_println("Creating folder: ", "$data_folder/uncertainy")
+		mkdir("$data_folder/uncertainy")
+	end
+
 
 	acceptances = Atomic{Int}(0)
 	rejections = Atomic{Int}(0)
@@ -50,9 +55,9 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 		
 			μ = rand()*(opt.μ_range[2]-opt.μ_range[1]) + opt.μ_range[1]
 
-			sys = GCMC_System(L=opt.L, σ=opt.σ, μ=μ, β=opt.β, Vext=Vext, mobility=opt.mobility, move_prob=opt.move_prob, insert_prob=opt.insert_prob, dx=opt.dx)
+			sys = GCMC_System(L=opt.L, σ=opt.σ, μ=μ, β=opt.β, Vext=V, mobility=opt.mobility, move_prob=opt.move_prob, insert_prob=opt.insert_prob, dx=opt.dx)
 
-			rho, _ = simulate(sys, opt.steps, opt.therm_steps, opt.sample_interval, track_g=false, repetitions=opt.repetitions, threads=opt.threads[2])
+			rho, _, rho_uncertainty = simulate(sys, opt.steps, opt.therm_steps, opt.sample_interval, track_g=false, repetitions=opt.repetitions, threads=opt.threads[2])
 			rho = opt.rho_smooth_func(rho, sys)
 
 			if opt.accept_condition(rho)
@@ -68,6 +73,7 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 			data = [vec(c1) vec(rho)]
 			file_number_tmp = Threads.atomic_add!(file_number, 1)
 			writedlm("$data_folder/data$(file_number_tmp).dat", data, ';')
+			writedlm("$data_folder/uncertainy/uncert$(file_number_tmp).dat", vec(rho_uncertainty), ';')
 			verbose ? next!(P, showvalues=[(:acc, acceptances[]), (:rej, rejections[])]) : nothing
 		end
 	end
