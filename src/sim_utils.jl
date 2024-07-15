@@ -55,7 +55,12 @@ function try_insert!(sys::GCMC_System)
 
 	dE = energy(sys, sys.N) - sys.μ # Energy difference
 	# FIXME this might be wrong:
-	α_insert = clamp(1 - (sys.N * sys.σ^2 + 1) / sys.L^2 * exp(sys.β * dE), 0, 1) # Acceptance probability
+	if sys.particle_shape == :square
+		A = sys.σ^2
+	elseif sys.particle_shape == :circle
+		A = pi/4 * sys.σ^2
+	end
+	α_insert = clamp(1 - (sys.N * A + 1) / 2sys.L^2 * exp(sys.β * dE), 0, 1) # Acceptance probability
 
 	if rand() < α_insert # Accept the insertion
 		return true
@@ -74,8 +79,14 @@ function try_delete!(sys::GCMC_System)
 
 	i = rand(1:sys.N) # Random particle
 	dE = -energy(sys, i) + sys.μ # Energy difference
+
 	# FIXME this might be wrong:
-	α_delete = min(1, sys.σ^2 * sys.N / (2*sys.L^2) * exp(-sys.β * dE)) # Acceptance probability
+	if sys.particle_shape == :square
+		A = sys.σ^2
+	elseif sys.particle_shape == :circle
+		A = pi/4 * sys.σ^2
+	end
+	α_delete = min(1, A * sys.N / (2*sys.L^2) * exp(-sys.β * dE)) # Acceptance probability
 
 	if rand() < α_delete # Accept the deletion
 		delete!(sys, i)

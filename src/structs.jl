@@ -75,8 +75,8 @@ mutable struct GCMC_System
 
 	dx::Float64 # Discretization step for histogram
 	particle_shape::Symbol # Shape of the particle
-	function GCMC_System(;L::Real=10, σ::Real=1.0, μ::Real=0.0, β::Real=1.0, Vext::Function=(x) -> 0.0, mobility=0.25σ, move_prob::Float64=0.8, insert_prob::Float64=0.5, dx::Float64=0.05, particle_shape::Symbol=:sphere)
-		max_N = ceil(Int, L^2/(σ^2 * (particle_shape == :sphere ? π/4 : 1)))
+	function GCMC_System(;L::Real=10, σ::Real=1.0, μ::Real=0.0, β::Real=1.0, Vext::Function=(x) -> 0.0, mobility=0.25σ, move_prob::Float64=0.8, insert_prob::Float64=0.5, dx::Float64=0.05, particle_shape::Symbol=:circle)
+		max_N = ceil(Int, L^2/(σ^2 * (particle_shape == :circle ? π/4 : 1)))
 		positions = zeros(Float64, max_N, 2)
 		positions .= NaN64
 		new(L, 0, σ, μ, β, Vext, positions, is_colliding_small, mobility, move_prob, insert_prob, dx, particle_shape)
