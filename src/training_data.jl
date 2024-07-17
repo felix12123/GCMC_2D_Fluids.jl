@@ -55,7 +55,7 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 		
 			μ = rand()*(opt.μ_range[2]-opt.μ_range[1]) + opt.μ_range[1]
 
-			sys = GCMC_System(L=opt.L, σ=opt.σ, μ=μ, β=opt.β, Vext=V, mobility=opt.mobility, move_prob=opt.move_prob, insert_prob=opt.insert_prob, dx=opt.dx)
+			sys = GCMC_System(L=opt.L, σ=opt.σ, μ=μ, β=opt.β, Vext=Vext, mobility=opt.mobility, move_prob=opt.move_prob, insert_prob=opt.insert_prob, dx=opt.dx)
 
 			rho, _, rho_uncertainty = simulate(sys, opt.steps, opt.therm_steps, opt.sample_interval, track_g=false, repetitions=opt.repetitions, threads=opt.threads[2])
 			rho = opt.rho_smooth_func(rho, sys)
