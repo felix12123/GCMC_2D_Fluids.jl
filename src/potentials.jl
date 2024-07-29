@@ -28,7 +28,7 @@ mutable struct PotentialOptions
 			end
 		end
 		if wall_thickness isa Real
-			wall_thickness = (0, wall_thickness)
+			wall_thickness = (wall_thickness/2, wall_thickness)
 		end
 		new(L, dx, num_sin, sin_amp, sin_periods, periodic, wall, wall_thickness)
 	end
@@ -62,7 +62,7 @@ function generate_random_potential(po::PotentialOptions)
 		@warn "Wall type \"$(po.wall)\" not implemented, no wall is being used."
 	end
 	wall_thickness = rand() * (po.wall_thickness[2] - po.wall_thickness[1]) + po.wall_thickness[1]
-	wall_thickness -= wall_thickness % po.dx
+	wall_thickness -= max(wall_thickness, wall_thickness % po.dx)
 	phase_shift = rand(num_sin) .* 2pi
 	function V(x, y)
 		s = 0.0
