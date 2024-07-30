@@ -7,8 +7,11 @@ mutable struct PotentialOptions
 	periodic::Bool
 	wall::Symbol
 	wall_thickness::Tuple{Float64, Float64}
+	num_plateaus::Tuple{Int, Int}
+	plateau_size::Tuple{Float64, Float64}
+	plateau_potential::Tuple{Float64, Float64}
 
-	function PotentialOptions(;L::Int, num_sin::Union{Int, Tuple{Int, Int}}=(1, 5), sin_amp::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), sin_periods::Union{<:Real, Tuple{<:Real, <:Real}}=(1,3), periodic::Bool=true, wall::Symbol=:none, wall_thickness::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), dx::Number=0.1)
+	function PotentialOptions(;L::Int, num_sin::Union{Int, Tuple{Int, Int}}=(1, 5), sin_amp::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), sin_periods::Union{<:Real, Tuple{<:Real, <:Real}}=(1,3), periodic::Bool=true, wall::Symbol=:none, wall_thickness::Union{<:Real, Tuple{<:Real, <:Real}}=(0,1), dx::Number=0.1, num_plateaus::Union{Int, Tuple{Int, Int}}=(0, 0), plateau_size::Union{<:Real, Tuple{<:Real, <:Real}}=(0,L/2), plateau_potential::Union{<:Real, Tuple{<:Real, <:Real}}=(-1,1))
 		if num_sin isa Int
 			num_sin = (1, num_sin)
 		end
@@ -30,7 +33,16 @@ mutable struct PotentialOptions
 		if wall_thickness isa Real
 			wall_thickness = (wall_thickness/2, wall_thickness)
 		end
-		new(L, dx, num_sin, sin_amp, sin_periods, periodic, wall, wall_thickness)
+		if num_plateaus isa Int
+			num_plateaus = (0, num_plateaus)
+		end
+		if plateau_size isa Real
+			plateau_size = (0, plateau_size)
+		end
+		if plateau_potential isa Real
+			plateau_potential = (-plateau_potential, plateau_potential)
+		end
+		new(L, dx, num_sin, sin_amp, sin_periods, periodic, wall, wall_thickness, 	num_plateaus, plateau_size, plateau_potential)
 	end
 end
 
@@ -55,6 +67,7 @@ function generate_random_potential(po::PotentialOptions)
 			directions[i,:] .= rand([[1, 0], [0, 1], [1, 1]])
 		end
 	end
+	phase_shift = rand(num_sin) .* 2pi
 
 	# generate wall function
 	if po.wall == :box || po.wall == :none
@@ -62,8 +75,14 @@ function generate_random_potential(po::PotentialOptions)
 		@warn "Wall type \"$(po.wall)\" not implemented, no wall is being used."
 	end
 	wall_thickness = rand() * (po.wall_thickness[2] - po.wall_thickness[1]) + po.wall_thickness[1]
-	wall_thickness -= max(wall_thickness, wall_thickness % po.dx)
-	phase_shift = rand(num_sin) .* 2pi
+	wall_thickness = max(wall_thickness, wall_thickness % po.dx)
+
+	num_plateaus = rand(po.num_plateaus[1]:po.num_plateaus[2])
+	plateau_height = rand(num_plateaus) .* (po.plateau_size[2] - po.plateau_size[1]) .+ po.plateau_size[1]
+	plateau_width = rand(num_plateaus) .* (po.plateau_size[2] - po.plateau_size[1]) .+ po.plateau_size[1]
+	plateau_corner = [rand(2) .* [po.L .- plateau_width[i], po.L .- plateau_height[i]] for i in 1:num_plateaus]
+	plateau_potential = rand(num_plateaus) .* (po.plateau_potential[2] - po.plateau_potential[1]) .+ po.plateau_potential[1]
+
 	function V(x, y)
 		s = 0.0
 		for i in 1:num_sin
@@ -73,6 +92,12 @@ function generate_random_potential(po::PotentialOptions)
 		if po.wall == :box
 			if x < wall_thickness || x > po.L-wall_thickness || y < wall_thickness || y > po.L-wall_thickness
 				s += Inf
+			end
+		end
+
+		for i in 1:num_plateaus
+			if x > plateau_corner[i][1] && x < plateau_corner[i][1] + plateau_width[i] && y > plateau_corner[i][2] && y < plateau_corner[i][2] + plateau_height[i]
+				s += plateau_potential[i]
 			end
 		end
 		return s
