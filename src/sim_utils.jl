@@ -104,8 +104,10 @@ function try_move!(sys::GCMC_System)
 	i = rand(1:sys.N) # Random particle
 
 	x, y = sys.positions[i,:]
-	dx, dy = randn(2) * sys.mobility
-	new_x, new_y = mod(x+dx, sys.L), mod(y+dy, sys.L) # Random move
+	dx = randn() * sys.mobility
+	dy = randn() * sys.mobility
+	new_x = mod(x+dx, sys.L) # Random move
+	new_y = mod(y+dy, sys.L)
 
 	# check if new position is colliding, if yes we can save time and not calculate the energy
 	delete!(sys, i)
