@@ -52,7 +52,8 @@ function simulate_once(sys::GCMC_System, steps::Int64, therm_steps::Int64, sampl
 	return rho, g, obs_vals
 end
 
-function simulate(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; repetitions::Int=1, threads::Int=Threads.nthreads(), track_g=false)
+function simulate(sys::GCMC_System, steps::Number, therm_steps::Number, sample_interval::Number=100; repetitions::Int=1, threads::Int=Threads.nthreads(), track_g=false)
+	steps, therm_steps, sample_interval = ceil(Int, steps), ceil(Int, therm_steps), ceil(Int, sample_interval)
 	# if mean(sys.Vext.(Iterators.product(sys.dx/2:sys.dx:sys.L, sys.dx/2:sys.dx:sys.L)) .- sys.μ .> 4) > 0.05
 	# 	@warn "Warning: Vext is too high, the system will likely contain lots of ρ=0. returning empty arrays to avoid unnecessary computation."
 	# 	s = sys.L/sys.dx |> floor |> Int

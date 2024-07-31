@@ -19,7 +19,8 @@ function generate_random_potential_1D(po::PotentialOptions)
 
 	wall_thickness = rand() * (po.wall_thickness[2] - po.wall_thickness[1]) + po.wall_thickness[1]
 	phase_shift = rand(num_sin) .* 2pi
-	function V(xy)
+	function V(x, y)
+		xy = (x, y) #FIXME
 		s = 0.0
 		for i in 1:num_sin
 			s += sin(xy ⋅ directions[i, :] * 2pi / po.L * sin_periods[i] + phase_shift[i]) * sin_amps[i]

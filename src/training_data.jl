@@ -23,9 +23,9 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 		my_println("Creating folder: ", data_folder)
 		mkdir(data_folder)
 	end
-	if !isdir("$data_folder/uncertainy")
-		my_println("Creating folder: ", "$data_folder/uncertainy")
-		mkdir("$data_folder/uncertainy")
+	if !isdir("$data_folder/uncertainty")
+		my_println("Creating folder: ", "$data_folder/uncertainty")
+		mkdir("$data_folder/uncertainty")
 	end
 
 
@@ -73,7 +73,7 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 			data = [vec(c1) vec(rho)]
 			file_number_tmp = Threads.atomic_add!(file_number, 1)
 			writedlm("$data_folder/data$(file_number_tmp).dat", data, ';')
-			writedlm("$data_folder/uncertainy/uncert$(file_number_tmp).dat", vec(rho_uncertainty), ';')
+			writedlm("$data_folder/uncertainty/uncert$(file_number_tmp).dat", vec(rho_uncertainty), ';')
 			verbose ? next!(P, showvalues=[(:acc, acceptances[]), (:rej, rejections[])]) : nothing
 		end
 	end
