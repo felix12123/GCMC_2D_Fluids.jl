@@ -1,4 +1,4 @@
-function plot_data_folder(folder::String, plot_folder::String=folder*"/plots"; project=:yes)
+function plot_data_folder(folder::String, plot_folder::String=folder*"/plots"; project=false)
 	files = filter(x->occursin(".dat", x), readdir(folder, join=true))
 	if isempty(files)
 		println("No data files found in folder $folder")
@@ -9,7 +9,7 @@ function plot_data_folder(folder::String, plot_folder::String=folder*"/plots"; p
 	end
 
 	function plot_rho(rho)
-		if project == :yes
+		if project
 			rho_1d = mean(rho, dims=2)
 			return plot(rho_1d, xlabel="x", ylabel="ρ(x)", legend=false)
 		else
