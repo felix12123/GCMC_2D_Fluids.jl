@@ -12,7 +12,7 @@ end
 
 function update_histogram!(hist::Histogram, sys::GCMC_System)
 	for i in 1:sys.N
-		hist.ρ[clamp(floor(Int, sys.positions[i,1]/hist.dx)+1, 1, size(hist.ρ, 1)), clamp(floor(Int, sys.positions[i,2]/hist.dx)+1, 1, size(hist.ρ, 2))] += 1
+		hist.ρ[ceil(Int, sys.positions[i,2]/hist.dx), ceil(Int, sys.positions[i,1]/hist.dx)] += 1
 	end
 	hist.count += 1
 end

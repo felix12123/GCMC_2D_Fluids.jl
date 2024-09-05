@@ -60,7 +60,8 @@ function try_insert!(sys::GCMC_System)
 	elseif sys.particle_shape == :circle
 		A = pi/4 * sys.σ^2
 	end
-	α_insert = clamp(1 - (sys.N * A + 1) / 2sys.L^2 * exp(sys.β * dE), 0, 1) # Acceptance probability
+
+	α_insert = clamp(sys.L^2 / (sys.N+1) * exp(-sys.β * dE), 0, 1) # Acceptance probability
 
 	if rand() < α_insert # Accept the insertion
 		return true
@@ -86,7 +87,8 @@ function try_delete!(sys::GCMC_System)
 	elseif sys.particle_shape == :circle
 		A = pi/4 * sys.σ^2
 	end
-	α_delete = min(1, A * sys.N / (2*sys.L^2) * exp(-sys.β * dE)) # Acceptance probability
+	
+	α_delete = clamp(sys.N / (sys.L^2) * exp(-sys.β * dE), 0, 1) # Acceptance probability
 
 	if rand() < α_delete # Accept the deletion
 		delete!(sys, i)
