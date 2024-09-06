@@ -55,8 +55,8 @@ function move!(sys::GCMC_System, i::Int, x::Real, y::Real)
 	if i > sys.N
 		return false
 	end
-	sys.positions[i,1] .= Float64(x)
-	sys.positions[i,2] .= Float64(y)
+	sys.positions[i,1] = Float64(x)
+	sys.positions[i,2] = Float64(y)
 end
 
 function try_insert!(sys::GCMC_System)
@@ -145,7 +145,7 @@ function try_move!(sys::GCMC_System)
 
 	# If the move is rejected, move back to the old position
 	move!(sys, i, x, y)
-	
+
 	return false # Move rejected
 end
 
