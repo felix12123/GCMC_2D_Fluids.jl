@@ -120,8 +120,8 @@ function try_move!(sys::GCMC_System)
 	i = rand(1:sys.N) # Random particle
 
 	x, y = sys.positions[i,:]
-	dx = randn() * sys.mobility
-	dy = randn() * sys.mobility
+	dx = rand() * sys.mobility
+	dy = rand() * sys.mobility
 	new_x = mod(x+dx, sys.L) # Random move
 	new_y = mod(y+dy, sys.L)
 
@@ -135,7 +135,7 @@ function try_move!(sys::GCMC_System)
 	# Move the particle
 	move!(sys, i, new_x, new_y)
 
-	E2 = energy(sys, sys.N) # Energy after the move
+	E2 = energy(sys, i) # Energy after the move
 	dE = E2-E1 # Energy difference
 	α_move = min(1, exp(-sys.β * dE)) # Acceptance probability
 
