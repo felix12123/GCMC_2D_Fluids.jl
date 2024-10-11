@@ -6,3 +6,5 @@
 # media
 *.png
 profile.pb.gz
+c_sim/*
+examples/*

@@ -26,7 +26,7 @@ mutable struct GCMC_TrainingData
 	folder::String # Folder to save data
 
 	accept_condition::Function # Function to check if a density distribution is accepted
-	Vext_generator::Function # Function to generate a new external potential
+	pot_opts::PotentialOptions # Function to generate a new external potential
 	rho_smooth_func::Function # Function to smooth the density distribution
 
 	function GCMC_TrainingData(folder::String;
@@ -45,14 +45,14 @@ mutable struct GCMC_TrainingData
 			move_prob::Real=0.9,
 			insert_prob::Real=0.5,
 			accept_condition::Function=(x...)->true,
-			Vext_generator::Function=(x...)->0.0,
+			pot_opts::PotentialOptions=PotentialOptions(L=L),
 			rho_smooth_func::Function=(x, y...)->x
 		)
 		if isa(threads, Real)
 			half_threads = floor(Int, threads/2)
 			threads = (half_threads, threads - half_threads)
 		end
-		new(L, σ, μ_range, β, mobility, dx, ceil(Int, steps), ceil(Int, therm_steps), ceil(Int, sample_interval), threads, ceil(Int, repetitions), ceil(Int, num_systems), move_prob, insert_prob, folder, accept_condition, Vext_generator, rho_smooth_func)
+		new(L, σ, μ_range, β, mobility, dx, ceil(Int, steps), ceil(Int, therm_steps), ceil(Int, sample_interval), threads, ceil(Int, repetitions), ceil(Int, num_systems), move_prob, insert_prob, folder, accept_condition, pot_opts, rho_smooth_func)
 	end
 end
 
@@ -63,7 +63,7 @@ mutable struct GCMC_System
 	σ::Float64 # Particle diameter
 	μ::Float64 # Chemical potential
 	β::Float64 # Inverse temperature
-	Vext::Function # External potential
+	Vext::Union{Function, NamedTuple} # External potential
 	positions::Matrix{Float64}
 	is_colliding::Function # Function to check if a particle is colliding. might be switched depending on amount of particles
 	mobility::Float64 # Particle mobility (standard deviation of random displacement)
@@ -75,7 +75,7 @@ mutable struct GCMC_System
 
 	dx::Float64 # Discretization step for histogram
 	particle_shape::Symbol # Shape of the particle
-	function GCMC_System(;L::Real=10, σ::Real=1.0, μ::Real=0.0, β::Real=1.0, Vext::Function=(x) -> 0.0, mobility=0.1σ, move_prob::Float64=0.8, insert_prob::Float64=0.5, dx::Float64=0.05, particle_shape::Symbol=:circle)
+	function GCMC_System(;L::Real=10, σ::Real=1.0, μ::Real=0.0, β::Real=1.0, Vext::Union{Function, NamedTuple}=(x...) -> 0.0, mobility=0.1σ, move_prob::Float64=0.8, insert_prob::Float64=0.5, dx::Float64=0.05, particle_shape::Symbol=:circle)
 		max_N = ceil(Int, L^2/(σ^2 * (particle_shape == :circle ? π/4 : 1)))  * 1000 #FIXME remove the 1000
 		positions = zeros(Float64, max_N, 2)
 		positions .= NaN64

@@ -19,31 +19,22 @@ function generate_random_potential_1D(po::PotentialOptions)
 
 	wall_thickness = rand() * (po.wall_thickness[2] - po.wall_thickness[1]) + po.wall_thickness[1]
 	phase_shift = rand(num_sin) .* 2pi
-	function V(x, y)
-		xy = (x, y) #FIXME
-		s = 0.0
-		for i in 1:num_sin
-			s += sin(xy ⋅ directions[i, :] * 2pi / po.L * sin_periods[i] + phase_shift[i]) * sin_amps[i]
-		end
-		
-		if po.wall == :box
-			if xy[1] < wall_thickness || xy[1] > po.L-wall_thickness || xy[2] < wall_thickness || xy[2] > po.L-wall_thickness
-				s += Inf
-			end
-		elseif po.wall == :walls
-			if xy[1] < wall_thickness || xy[1] > po.L-wall_thickness
-				s += Inf
-			end
-		end
-		return s
-	end
+	
+	num_plateaus = 0
+	plateau_height = []
+	plateau_width = []
+	plateau_corner = []
+	plateau_potential = []
+
+	return (num_sin=num_sin, sin_amps=sin_amps, sin_periods=sin_periods, directions=directions, phase_shift=phase_shift, wall=po.wall, wall_thickness=wall_thickness, num_plateaus=num_plateaus, plateau_height=plateau_height, plateau_width=plateau_width, plateau_corner=plateau_corner, plateau_potential=plateau_potential, L=po.L)
 end
 
 function create_training_data_1D(opt::GCMC_TrainingData, verbose::Bool=false)
 	my_println(x...) = if verbose; println(x...); end
 
 	# testing if the potential is 1D
-	Vext = opt.Vext_generator()
+	Vparams = generate_random_potential_1D(opt.pot_opts)
+	Vext = (x,y)->eval_pot(x, y, Vparams)
 	for _ in 1:20
 		x = rand() * opt.L
 		Vs = [Vext([x, rand() * opt.L]) for _ in 1:100]

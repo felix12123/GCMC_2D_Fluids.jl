@@ -31,6 +31,8 @@ function update_g_histogram!(hist::g_Histogram, sys::GCMC_System)
 end
 
 function simulate_once(sys::GCMC_System, steps::Int64, therm_steps::Int64, sample_interval::Int64=1000; obs::Vector=[], track_g=false)
+	@assert isa(sys.Vext, Function)
+
 	obs_vals = zeros(ceil(Int, steps/sample_interval), length(obs))
 	hist = Histogram(sys)
 	g_hist = g_Histogram(sys)
@@ -53,14 +55,15 @@ function simulate_once(sys::GCMC_System, steps::Int64, therm_steps::Int64, sampl
 end
 
 function simulate(sys::GCMC_System, steps::Number, therm_steps::Number, sample_interval::Number=100; repetitions::Int=1, threads::Int=Threads.nthreads(), track_g=false)
+
 	steps, therm_steps, sample_interval = ceil(Int, steps), ceil(Int, therm_steps), ceil(Int, sample_interval)
-	# if mean(sys.Vext.(Iterators.product(sys.dx/2:sys.dx:sys.L, sys.dx/2:sys.dx:sys.L)) .- sys.μ .> 4) > 0.05
-	# 	@warn "Warning: Vext is too high, the system will likely contain lots of ρ=0. returning empty arrays to avoid unnecessary computation."
-	# 	s = sys.L/sys.dx |> floor |> Int
-	# 	return zeros(Float64, s, s), zeros(Float64, s), []
-	# end
 	if repetitions == 1
-		return simulate_once(sys, steps, therm_steps, sample_interval; obs=[], track_g=track_g)
+		if !isa(sys.Vext, Function)
+			sys1 = deepcopy(sys)
+			sys1.Vext = (x,y)->eval_pot(x, y, deepcopy(sys.Vext)::NamedTuple)
+		end
+
+		return simulate_once(sys1, steps, therm_steps, sample_interval; obs=[], track_g=track_g)
 	end
 
 	# initialize variables
@@ -73,12 +76,15 @@ function simulate(sys::GCMC_System, steps::Number, therm_steps::Number, sample_i
 	task_packages = [tasks[i:threads:end] for i in 1:threads]
 
 	# deepcopy systems before looping and create results array
-	systems = [deepcopy(sys) for _ in 1:repetitions]
 	results::Vector{Tuple{Matrix{Float64}, Vector{Float64}}} = [(zeros(Float64, s, s), zeros(Float64, floor(Int, sys.L/2/sys.dx))) for _ in 1:repetitions]
 	Threads.@threads for n in 1:threads
 		is = task_packages[n]
 		for i in is
-			rho_i, g_i = simulate_once(systems[i], steps, therm_steps, sample_interval; track_g=track_g)
+			system = deepcopy(sys)
+			if !isa(system.Vext, Function)
+				system.Vext = (x,y)->eval_pot(x, y, deepcopy(sys.Vext))
+			end
+			rho_i, g_i = simulate_once(system, steps, therm_steps, sample_interval; track_g=track_g)
 			results[i][1] .= rho_i
 			results[i][2] .= g_i
 		end

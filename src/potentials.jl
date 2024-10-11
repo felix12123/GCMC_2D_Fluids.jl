@@ -46,7 +46,7 @@ mutable struct PotentialOptions
 	end
 end
 
-function generate_random_potential(po::PotentialOptions)
+function generate_random_potential(po::PotentialOptions)::NamedTuple
 	# generate sinus functions
 	num_sin = rand(po.num_sin[1]:po.num_sin[2])
 	sin_amps = rand(num_sin) .* (po.sin_amp[2] - po.sin_amp[1]) .+ po.sin_amp[1]
@@ -83,25 +83,41 @@ function generate_random_potential(po::PotentialOptions)
 	plateau_corner = [rand(2) .* [po.L .- plateau_width[i], po.L .- plateau_height[i]] for i in 1:num_plateaus]
 	plateau_potential = rand(num_plateaus) .* (po.plateau_potential[2] - po.plateau_potential[1]) .+ po.plateau_potential[1]
 
-	function V(x, y)
-		s = 0.0
-		for i in 1:num_sin
-			s += sin((x * directions[i, 1] + y * directions[i, 2]) * 2pi / po.L * sin_periods[i] + phase_shift[i]) * sin_amps[i]
-		end
-		
-		if po.wall == :box
-			if x < wall_thickness || x > po.L-wall_thickness || y < wall_thickness || y > po.L-wall_thickness
-				s += Inf
-			end
-		end
+	return (num_sin=num_sin, sin_amps=sin_amps, sin_periods=sin_periods, directions=directions, phase_shift=phase_shift, wall=po.wall, wall_thickness=wall_thickness, num_plateaus=num_plateaus, plateau_height=plateau_height, plateau_width=plateau_width, plateau_corner=plateau_corner, plateau_potential=plateau_potential, L=po.L)
+end
 
-		for i in 1:num_plateaus
-			if x > plateau_corner[i][1] && x < plateau_corner[i][1] + plateau_width[i] && y > plateau_corner[i][2] && y < plateau_corner[i][2] + plateau_height[i]
-				s += plateau_potential[i]
-			end
-		end
-		return s
+function eval_pot(x::Real, y::Real, pot::NamedTuple)
+	num_sin = pot.num_sin
+	sin_amps = pot.sin_amps
+	sin_periods = pot.sin_periods
+	directions = pot.directions
+	phase_shift = pot.phase_shift
+	wall = pot.wall
+	wall_thickness = pot.wall_thickness
+	num_plateaus = pot.num_plateaus
+	plateau_height = pot.plateau_height
+	plateau_width = pot.plateau_width
+	plateau_corner = pot.plateau_corner
+	plateau_potential = pot.plateau_potential
+	L = pot.L
+
+	s = 0.0
+	for i in 1:num_sin
+		s += sin((x * directions[i, 1] + y * directions[i, 2]) * 2pi / L * sin_periods[i] + phase_shift[i]) * sin_amps[i]
 	end
+	
+	if wall == :box
+		if x < wall_thickness || x > L-wall_thickness || y < wall_thickness || y > L-wall_thickness
+			s += Inf
+		end
+	end
+
+	for i in 1:num_plateaus
+		if x > plateau_corner[i][1] && x < plateau_corner[i][1] + plateau_width[i] && y > plateau_corner[i][2] && y < plateau_corner[i][2] + plateau_height[i]
+			s += plateau_potential[i]
+		end
+	end
+	return s
 end
 
 

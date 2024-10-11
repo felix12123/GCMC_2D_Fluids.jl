@@ -51,7 +51,8 @@ function create_training_data(opt::GCMC_TrainingData, verbose::Bool=false)
 			end
 
 
-			Vext = opt.Vext_generator()
+			Vparams = generate_random_potential(opt.pot_opts)
+			Vext = (x,y)->eval_pot(x, y, Vparams)
 		
 			μ = rand()*(opt.μ_range[2]-opt.μ_range[1]) + opt.μ_range[1]
 

@@ -3,9 +3,9 @@ module GCMC_2D_Fluids
 
 include("visualisation.jl")
 
+include("potentials.jl")
 include("structs.jl")
 include("utils.jl")
-include("potentials.jl")
 include("sim_utils.jl")
 include("simulation.jl")
 include("training_data.jl")
@@ -26,6 +26,6 @@ export GCMC_System,
 	get_c1,
 	make_res_filter,
 	filter_reservoir,
-	plot_data_folder
-
+	plot_data_folder,
+	eval_pot
 end
