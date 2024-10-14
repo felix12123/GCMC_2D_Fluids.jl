@@ -110,8 +110,8 @@ function asses_reservoir(folder::String)
 	for i in 1:N
 		data = readdlm(rho_files[i], ';')
 		std_data = readdlm(std_files[i], ';')
-		avg_std[i] = mean(std_data[!iszero.(std_data)])
-		avg_rho[i] = mean(data[:, 2][!iszero.(data[:, 2])])
+		avg_std[i] = mean(std_data[.!iszero.(std_data)])
+		avg_rho[i] = mean(data[:, 2][.!iszero.(data[:, 2])])
 		avg_c1[i]  = mean(data[:, 1][isfinite.(data[:, 1])])
 	end
 
