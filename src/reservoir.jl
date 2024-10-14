@@ -1,5 +1,15 @@
 # if we have created a reservoir of training data, we might want to filter out specific cofigurations
 
+using Statistics, DelimitedFiles, ProgressMeter
+
+function total_uncertainty_of_error(xs::Vector{<:Real}, σs::Vector{<:Real})
+	σ_stat = std(xs) / sqrt(length(xs))
+	σ_prop = sqrt(sum(σs .^ 2)) / length(xs)
+	return sqrt(σ_stat^2 + σ_prop^2)
+end
+
+
+
 function make_res_filter(;rho_lims=(0.0,1.0), c1_lims=(-Inf, Inf), minmax_rho=(0.0, Inf), n::Real=0.05)
 	function res_filter(rho, c1)
 		if !(rho_lims[1] <= mean(rho) <= rho_lims[2])
@@ -32,14 +42,20 @@ function filter_reservoir(res_folder::String, filter_func::Function, out_folder:
 	if !isdir(out_folder)
 		mkdir(out_folder)
 	end
+	if !isdir(out_folder*"/uncertainty")
+		mkdir(out_folder*"/uncertainty")
+	end
 
-	for file in files
+	@showprogress for file in files
 		data = readdlm(file, ';')
+		number = collect(basename(file))[isnumeric.(collect(basename(file)))] |> String
+		rho_std_0 = readdlm(res_folder * "/uncertainty/uncert" * number * ".dat", ';')
 		c1_0  = data[:, 1]
 		rho_0 = data[:, 2]
 		L = Int(sqrt(length(c1_0)))
 		rho_0 = reshape(rho_0, L, L)
 		c1_0  = reshape(c1_0,  L, L)
+		rho_std_0 = reshape(rho_std_0, L, L)
 
 		# we need to get βμloc to recalculate c1 after we scaled down the density profile.
 		# c1 = log(ρ) - βμloc
@@ -47,8 +63,9 @@ function filter_reservoir(res_folder::String, filter_func::Function, out_folder:
 		βμloc_0 = log.(rho_0) .- c1_0
 
 		l = Int(L÷downscale)
-		rho   = zeros(l, l)
-		βμloc = zeros(l, l)
+		rho     = zeros(l, l)
+		rho_std = zeros(l, l)
+		βμloc   = zeros(l, l)
 
 		rho_window = zeros(downscale * downscale)
 		bmloc_window = zeros(downscale * downscale)
@@ -57,6 +74,7 @@ function filter_reservoir(res_folder::String, filter_func::Function, out_folder:
 
 			# save the window of the original data that we want to mean
 			rho_window = vec(rho_0[(i-1)*downscale+1:i*downscale, (j-1)*downscale+1:j*downscale])
+			rho_std_window = vec(rho_std_0[(i-1)*downscale+1:i*downscale, (j-1)*downscale+1:j*downscale])
 			bmloc_window = vec(βμloc_0[(i-1)*downscale+1:i*downscale, (j-1)*downscale+1:j*downscale])
 
 			# filter out any Infs or NaNs of bmloc_window
@@ -65,12 +83,14 @@ function filter_reservoir(res_folder::String, filter_func::Function, out_folder:
 			else
 				βμloc[i, j] = -Inf
 			end
-			rho[i, j]    = mean(mean(rho_window))
+			rho[i, j]     = mean(rho_window)
+			rho_std[i, j] = total_uncertainty_of_error(rho_window, rho_std_window)
 		end
 		c1 = log.(rho) .- βμloc
 
 		if filter_func(rho, c1)
 			writedlm(out_folder*"/$(basename(file)[1:end-4]).dat", [vec(c1) vec(rho)], ';')
+			writedlm(out_folder*"/uncertainty/uncert$(number).dat", vec(rho_std), ';')
 		end
 	end
 	
