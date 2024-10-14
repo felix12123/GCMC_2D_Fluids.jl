@@ -1,6 +1,6 @@
 # if we have created a reservoir of training data, we might want to filter out specific cofigurations
 
-using Statistics, DelimitedFiles, ProgressMeter
+using Statistics, DelimitedFiles, ProgressMeter, Plots
 
 function total_uncertainty_of_error(xs::Vector{<:Real}, σs::Vector{<:Real})
 	σ_stat = std(xs) / sqrt(length(xs))
@@ -93,5 +93,36 @@ function filter_reservoir(res_folder::String, filter_func::Function, out_folder:
 			writedlm(out_folder*"/uncertainty/uncert$(number).dat", vec(rho_std), ';')
 		end
 	end
+	return out_folder
+end
+
+
+
+function asses_reservoir(folder::String)
+	N = length(filter(x -> occursin(".dat", x), readdir(folder, join=true)))
+	rho_files = folder .* "/data" .* string.(1:N) .* ".dat"
+	std_files = folder .* "/uncertainty/uncert" .* string.(1:N) .* ".dat"
 	
+	avg_std = zeros(N)
+	avg_rho = zeros(N)
+	avg_c1  = zeros(N)
+
+	for i in 1:N
+		data = readdlm(rho_files[i], ';')
+		std_data = readdlm(std_files[i], ';')
+		avg_std[i] = mean(std_data[!iszero.(std_data)])
+		avg_rho[i] = mean(data[:, 2][!iszero.(data[:, 2])])
+		avg_c1[i]  = mean(data[:, 1][isfinite.(data[:, 1])])
+	end
+
+	std_hist = histogram(avg_std, title="std histogram", xlabel="std", ylabel="count", bins=15)
+	rho_hist = histogram(avg_rho, title="rho histogram", xlabel="rho", ylabel="count", bins=15)
+	c1_hist  = histogram(avg_c1, title="c1 histogram", xlabel="c1", ylabel="count", bins=15)
+	plt = plot(std_hist, rho_hist, c1_hist, layout=(1, 3), size=(1200, 400))
+	display(plt)
+
+	println("average std: ", mean(avg_std), " ± ", std(avg_std), "\tstd_range: ", minimum(avg_std), " - ", maximum(avg_std))
+	println("average rho: ", mean(avg_rho), " ± ", std(avg_rho), "\trho_range: ", minimum(avg_rho), " - ", maximum(avg_rho))
+	println("average c1: ", mean(avg_c1), " ± ", std(avg_c1), "\tc1_range: ", minimum(avg_c1), " - ", maximum(avg_c1))
+	return avg_std, avg_rho, avg_c1
 end
