@@ -83,6 +83,13 @@ function generate_random_potential(po::PotentialOptions)::NamedTuple
 	plateau_corner = [rand(2) .* [po.L .- plateau_width[i], po.L .- plateau_height[i]] for i in 1:num_plateaus]
 	plateau_potential = rand(num_plateaus) .* (po.plateau_potential[2] - po.plateau_potential[1]) .+ po.plateau_potential[1]
 
+	# round plateau coordinates to dx
+	for i in 1:num_plateaus
+		plateau_corner[i] = round.(Int, plateau_corner[i] ./ po.dx) .* po.dx
+		plateau_width[i] = round(Int, plateau_width[i] / po.dx) * po.dx
+		plateau_height[i] = round(Int, plateau_height[i] / po.dx) * po.dx
+	end
+
 	return (num_sin=num_sin, sin_amps=sin_amps, sin_periods=sin_periods, directions=directions, phase_shift=phase_shift, wall=po.wall, wall_thickness=wall_thickness, num_plateaus=num_plateaus, plateau_height=plateau_height, plateau_width=plateau_width, plateau_corner=plateau_corner, plateau_potential=plateau_potential, L=po.L)
 end
 
