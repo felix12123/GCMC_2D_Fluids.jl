@@ -42,7 +42,7 @@ mutable struct PotentialOptions
 		if plateau_potential isa Real
 			plateau_potential = (-plateau_potential, plateau_potential)
 		end
-		new(L, dx, num_sin, sin_amp, sin_periods, periodic, wall, wall_thickness, 	num_plateaus, plateau_size, plateau_potential)
+		new(L, dx, num_sin, sin_amp, sin_periods, periodic, wall, wall_thickness, num_plateaus, plateau_size, plateau_potential)
 	end
 end
 
@@ -51,22 +51,14 @@ function generate_random_potential(po::PotentialOptions)::NamedTuple
 	num_sin = rand(po.num_sin[1]:po.num_sin[2])
 	sin_amps = rand(num_sin) .* (po.sin_amp[2] - po.sin_amp[1]) .+ po.sin_amp[1]
 	if po.periodic
-		sin_periods = rand(po.sin_periods[1]:po.sin_periods[2], num_sin)
+		sin_periods_x = rand(po.sin_periods[1]:po.sin_periods[2], num_sin)
+		sin_periods_y = rand(po.sin_periods[1]:po.sin_periods[2], num_sin)
 	else
-		sin_periods = rand(num_sin) .* (po.sin_periods[2] - po.sin_periods[1]) .+ po.sin_periods[1]
+		sin_periods_x = rand(num_sin) .* (po.sin_periods[2] - po.sin_periods[1]) .+ po.sin_periods[1]
+		sin_periods_y = rand(num_sin) .* (po.sin_periods[2] - po.sin_periods[1]) .+ po.sin_periods[1]
 	end
 
 	# roll directions of sinus wave, either x, y, or x-y direction. depends on periodicity
-	directions = zeros(Int, num_sin, 2)
-	if po.periodic
-		for i in 1:num_sin
-			directions[i,:] .= rand([[1, 0], [0, 1]])
-		end
-	else
-		for i in 1:num_sin
-			directions[i,:] .= rand([[1, 0], [0, 1], [1, 1]])
-		end
-	end
 	phase_shift = rand(num_sin) .* 2pi
 
 	# generate wall function
@@ -90,14 +82,14 @@ function generate_random_potential(po::PotentialOptions)::NamedTuple
 		plateau_height[i] = round(Int, plateau_height[i] / po.dx) * po.dx
 	end
 
-	return (num_sin=num_sin, sin_amps=sin_amps, sin_periods=sin_periods, directions=directions, phase_shift=phase_shift, wall=po.wall, wall_thickness=wall_thickness, num_plateaus=num_plateaus, plateau_height=plateau_height, plateau_width=plateau_width, plateau_corner=plateau_corner, plateau_potential=plateau_potential, L=po.L)
+	return (num_sin=num_sin, sin_amps=sin_amps, sin_periods_x=sin_periods_x, sin_periods_y=sin_periods_y, phase_shift=phase_shift, wall=po.wall, wall_thickness=wall_thickness, num_plateaus=num_plateaus, plateau_height=plateau_height, plateau_width=plateau_width, plateau_corner=plateau_corner, plateau_potential=plateau_potential, L=po.L)
 end
 
 function eval_pot(x::Real, y::Real, pot::NamedTuple)
 	num_sin = pot.num_sin
 	sin_amps = pot.sin_amps
-	sin_periods = pot.sin_periods
-	directions = pot.directions
+	sin_periods_x = pot.sin_periods_x
+	sin_periods_y = pot.sin_periods_y
 	phase_shift = pot.phase_shift
 	wall = pot.wall
 	wall_thickness = pot.wall_thickness
@@ -110,7 +102,7 @@ function eval_pot(x::Real, y::Real, pot::NamedTuple)
 
 	s = 0.0
 	for i in 1:num_sin
-		s += sin((x * directions[i, 1] + y * directions[i, 2]) * 2pi / L * sin_periods[i] + phase_shift[i]) * sin_amps[i]
+		s += sin((x * sin_periods_x[i] + y * sin_periods_y[i]) * 2pi / L + phase_shift[i]) * sin_amps[i]
 	end
 	
 	if wall == :box
