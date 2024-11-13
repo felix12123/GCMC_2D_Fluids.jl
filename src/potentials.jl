@@ -51,11 +51,11 @@ function generate_random_potential(po::PotentialOptions)::NamedTuple
 	num_sin = rand(po.num_sin[1]:po.num_sin[2])
 	sin_amps = rand(num_sin) .* (po.sin_amp[2] - po.sin_amp[1]) .+ po.sin_amp[1]
 	if po.periodic
-		sin_periods_x = rand(po.sin_periods[1]:po.sin_periods[2], num_sin)
-		sin_periods_y = rand(po.sin_periods[1]:po.sin_periods[2], num_sin)
+		sin_periods_x = (rand(po.sin_periods[1]:po.sin_periods[2], num_sin)) .* rand((1, -1), num_sin)
+		sin_periods_y = (rand(po.sin_periods[1]:po.sin_periods[2], num_sin)) .* rand((1, -1), num_sin)
 	else
-		sin_periods_x = rand(num_sin) .* (po.sin_periods[2] - po.sin_periods[1]) .+ po.sin_periods[1]
-		sin_periods_y = rand(num_sin) .* (po.sin_periods[2] - po.sin_periods[1]) .+ po.sin_periods[1]
+		sin_periods_x = (rand(num_sin) .* (po.sin_periods[2] - po.sin_periods[1]) .+ po.sin_periods[1]) .* rand((1, -1), num_sin)
+		sin_periods_y = (rand(num_sin) .* (po.sin_periods[2] - po.sin_periods[1]) .+ po.sin_periods[1]) .* rand((1, -1), num_sin)
 	end
 
 	# roll directions of sinus wave, either x, y, or x-y direction. depends on periodicity
